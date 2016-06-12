@@ -42,39 +42,39 @@ The **joint session history** is the union of the `Frame` entries ordered chrono
 The **frame iterator** stores an iterator over its **frame**'s next and prev vectors and the **frame**'s current entry. The iterator will return entries in the order they were added to the **frame**. The **frame iterator** struct also contains the length of the prev vector; this will be used when calculating the index of the active joint session history entry.
 
 Steps for the **next** algorithm:
-1. Pop the `prev` iterator, if the result is `Some(entry)` return the entry and abort these steps.
-2. If `current` is `Some(entry)` return the entry and abort these steps.
-3. Pop the `next` iterator, if the result is `Some(entry)` return the entry and abort these steps.
-4. Return `None`.
+  1. Pop the `prev` iterator, if the result is `Some(entry)` return the entry and abort these steps.
+  2. If this is the _root frame_ and `current` is `Some(entry)` return the entry and abort these steps.
+  3. Pop the `next` iterator, if the result is `Some(entry)` return the entry and abort these steps.
+  4. Return `None`.
 
 ### History Iterator
 The `HistoryIterator` is generated based on a _full frame tree_.
 
 Steps for creation of the `HistoryIterator`:
-1. Get the **full frame tree** starting from the _root frame_.
-2. Collect a peekable **frame iterator** from each **frame** into a vector.
-3. Create the `HistoryIterator` with the vector as the `stack`.
+  1. Get the **full frame tree** starting from the _root frame_.
+  2. Collect a peekable **frame iterator** from each **frame** into a vector.
+  3. Create the `HistoryIterator` with the vector as the `stack`.
 
 Steps for the **next** algorithm:
-1. Peek each **frame iterator** and find the one that has the smallest time that the entry was added to the **frame**.
-2. Return the **entry**.
+  1. Peek each **frame iterator** and find the one that has the smallest time that the entry was added to the **frame**.
+  2. Return the **entry**.
 
 Steps for calculating the active entry in the **joint session history**:
-1. Iterate through all of the **frame iterators** on the stack and sum the prev vec lengths.
-2. Return the summed value.
+  1. Iterate through all of the **frame iterators** on the stack and sum the prev vec lengths.
+  2. Return the summed value.
 
 ### Navigation By a Delta
 Steps for navigating by a delta:
-1. Find the _root frame_ from the given `PipelineId`.
-  - Search upward through the frame tree until you hit the root `Frame` or, if mozbrowser is enabled, a mozbrowser `Frame`. This is also called the **top level browsing context**.
-2. Construct a `HistoryIterator` from the _root frame_.
-3. Get the current _index of the active entry_ in the **joint session history** from the **history iterator**.
-4. Get _delta_ from the _navigation direction_.
-5. Calculate the index for the _specified entry_ by subtracting delta from the _index of the active entry_.
-4. Find the `nth(index of specified entry)` entry of the `HistoryIterator`. This is the _specified entry_.
-5. Run the **jump to time** algorithm on each `Frame` in the **full frame tree**.
-  - If _navigation direction_ is forward, pass the the time the entry was added to its `Frame` and pass the _navigation direction_.
-  - If _navigation direction_ is back, pass the the time the entry was navigated from to its `Frame` and pass the _navigation direction_.
+  1. Find the _root frame_ from the given `PipelineId`.
+    - Search upward through the frame tree until you hit the root `Frame` or, if mozbrowser is enabled, a mozbrowser `Frame`. This is also called the **top level browsing context**.
+  2. Construct a `HistoryIterator` from the _root frame_.
+  3. Get the current _index of the active entry_ in the **joint session history** from the **history iterator**.
+  4. Get _delta_ from the _navigation direction_.
+  5. Calculate the index for the _specified entry_ by subtracting delta from the _index of the active entry_.
+  4. Find the `nth(index of specified entry)` entry of the `HistoryIterator`. This is the _specified entry_.
+  5. Run the **jump to time** algorithm on each `Frame` in the **full frame tree**.
+    - If _navigation direction_ is forward, pass the the time the entry was added to its `Frame` and pass the _navigation direction_.
+    - If _navigation direction_ is back, pass the the time the entry was navigated from to its `Frame` and pass the _navigation direction_.
 
 ### Frame
 
