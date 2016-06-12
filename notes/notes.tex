@@ -8,6 +8,26 @@
 }
 \date{DRAFT of 2016-06-12}
 
+\usepackage{amssymb}
+
+% Macros, so we can change notation easily
+\newcommand{\aNH}{H}
+\newcommand{\Docs}{D}
+\newcommand{\parentOf}{\rightarrow}
+\newcommand{\childOf}{\leftarrow}
+\newcommand{\leChron}{\le}
+\newcommand{\ltChron}{<}
+\newcommand{\geChron}{\ge}
+\newcommand{\gtChron}{>}
+\newcommand{\eqSess}{\sim}
+\newcommand{\ltSess}{\lesssim}
+\newcommand{\gtSess}{\gtrsim}
+\newcommand{\parentOfSess}{\rightsquigarrow}
+\newcommand{\rootDoc}{d_0}
+\newcommand{\aDoc}{d}
+\newcommand{\bDoc}{e}
+\newcommand{\cDoc}{f}
+
 \begin{document}
 
 \maketitle
@@ -20,13 +40,93 @@
 
 [These are rough notes, working towards a model of navigation history for the web.]
 
+\section{Preliminaries}
+
+[Define forest, tree, total order, equivalence.]
+
 \section{Model}
 
-[Model goes here.]
+A \emph{navigation history} $\aNH=(\Docs,{\parentOf},{\leChron},{\eqSess},{\rootDoc})$ consists of:
+\begin{itemize}
+\item a forest $(\Docs,{\parentOf})$ (the \emph{document hierarchy}),
+\item a total order $(\Docs,{\leChron})$ (the \emph{chronological order}),
+\item an equivalence relation $(\Docs,{\eqSess})$ (the \emph{same-session equivalence}), and
+\item an element $\rootDoc \in \Docs$ (the \emph{root document}),
+\end{itemize}
+such that:
+\begin{itemize}
+\item for every $\aDoc \eqSess \rootDoc$, there is no $\bDoc \parentOf \aDoc$,
+\item for every $\aDoc \parentOf \bDoc$, we have $\aDoc \leChron \bDoc$, and
+\item if $\aDoc \parentOf \bDoc \eqSess \bDoc' \childOf \aDoc'$
+   then $\bDoc=\bDoc'$.
+\end{itemize}
+Define:
+\begin{itemize}
+\item a document $\aDoc$ is \emph{fully active} whenever $\rootDoc \parentOf^* \aDoc$,
+\item $\aDoc \ltSess \bDoc$ whenever $\aDoc \eqSess \bDoc$ and $\aDoc \ltChron \bDoc$,
+\item $\aDoc \parentOfSess \bDoc$ whenever $\aDoc \parentOf \bDoc' \eqSess \bDoc$,
+\item the \emph{session future} of $\aDoc$ is $\{ \bDoc \mid \aDoc \ltSess \bDoc \}$,
+\item the \emph{session past} of $\aDoc$ is $\{ \bDoc \mid \aDoc \gtSess \bDoc \}$,
+\item the \emph{joint session future} is $\{ \bDoc \mid \rootDoc \parentOf^* \aDoc \ltSess \bDoc \}$,
+\item the \emph{joint session past} is $\{ \bDoc \mid \rootDoc \parentOf^* \aDoc \gtSess \bDoc \}$,
+\end{itemize}
+Define \emph{$\aDoc$ in $\aNH$ naviagates to $\aDoc'$ in $\aNH'$} when:
+\begin{itemize}
+\item $\aDoc'\notin\Docs$,
+\item $\Docs' = \Docs \cup \{\aDoc'\} \setminus \{ \bDoc \mid \aDoc \ltSess \bDoc \}$,
+\item $\bDoc \leChron' \cDoc$ whenever
+  $\bDoc \leChron \cDoc$, or $\cDoc = \aDoc'$,
+\item $\bDoc \parentOf' \cDoc$ whenever
+  $\bDoc \parentOf \cDoc$ and $\cDoc \neq \aDoc$, or
+  $\bDoc \parentOf \aDoc$ and $\cDoc = \aDoc'$,
+\item $\bDoc \eqSess' \cDoc$ whenever
+  $\bDoc \eqSess \cDoc$, or
+  $\bDoc \eqSess \aDoc$ and $\cDoc = \aDoc'$, and
+\item $\rootDoc' = \rootDoc$ and $\rootDoc \neq \aDoc$, or
+  $\rootDoc' = \aDoc'$ and $\rootDoc = \aDoc$.
+\end{itemize}
+Define \emph{$\aNH$ traverses to $\aDoc$ in $\aNH'$} when:
+\begin{itemize}
+\item $\Docs'$ is $\Docs$,
+\item $\leChron'$ is $\leChron$,
+\item $\bDoc \parentOf' \cDoc$ whenever
+  $\bDoc \parentOf \cDoc$ and $\cDoc \not\parentOfSess^* \aDoc$, or
+  $\bDoc \parentOfSess \cDoc$ and $\cDoc \parentOfSess^* \aDoc$, 
+\item $\eqSess'$ is $\eqSess$, and
+\item $\rootDoc' \parentOf'^* \aDoc$.
+\end{itemize}
+Define \emph{$\aNH$ goes back by $n$ to $\aNH'$} when:
+\begin{itemize}
+\item the joint session past of $\aNH$ is $\aDoc_1 \gtChron \cdots \gtChron \aDoc_n \gtChron \cdots$,
+\item there is some $\aNH=\aNH_0,\ldots,\aNH_n=\aNH'$, such that
+\item $H_{i-1}$ traverses to $d_i$ in $H_i$ for each $1 \le i \le n$.
+\end{itemize}
+Define \emph{$\aNH$ goes forwards by $n$ to $\aNH'$} when:
+\begin{itemize}
+\item the joint session future of $\aNH$ is $\aDoc_1 \ltChron \cdots \ltChron \aDoc_n \ltChron \cdots$,
+\item there is some $\aNH=\aNH_0,\ldots,\aNH_n=\aNH'$, such that
+\item $H_{i-1}$ traverses to $d_i$ in $H_i$ for each $1 \le i \le n$.
+\end{itemize}
 
+\section{Properties}
+
+[State some goals, e.g. go($\delta$);go($\delta'$) is the same as go($\delta+\delta'$),
+  navigate;go($-1$) has the same active documents as doing nothing,
+  session history can be implemented effeciently in memory...]
+
+[I suspect none of these are true of the current spec, can we find a model in which
+  they are true?]
+  
 \section{Experiments}
 
 [A write-up of CGB's experiments with how different browsers handle navigation.]
+
+\section{Specification}
+
+[Suggested edits to the spec:
+  1. traverse to each document, not just the selected one,
+  2. keep all documents in the seession history, not just the fully active ones,
+  3. change the session history order.]
 
 \section{Conclusion}
 
