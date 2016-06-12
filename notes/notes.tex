@@ -70,7 +70,7 @@ Define:
 \item the \emph{joint session future} is $\{ \bDoc \mid \rootDoc \parentOf^* \aDoc \ltSess \bDoc \}$,
 \item the \emph{joint session past} is $\{ \bDoc \mid \rootDoc \parentOf^* \aDoc \gtSess \bDoc \}$,
 \end{itemize}
-Define \emph{$\aDoc$ in $\aNH$ naviagates to $\aDoc'$ in $\aNH'$} when:
+Define \emph{$\aDoc$ in $\aNH$ navigates to $\aDoc'$ in $\aNH'$} when:
 \begin{itemize}
 \item $\aDoc'\notin\Docs$,
 \item $\Docs' = \Docs \cup \{\aDoc'\} \setminus \{ \bDoc \mid \aDoc \ltSess \bDoc \}$,
@@ -91,7 +91,7 @@ Define \emph{$\aNH$ traverses to $\aDoc$ in $\aNH'$} when:
 \item $\leChron'$ is $\leChron$,
 \item $\bDoc \parentOf' \cDoc$ whenever
   $\bDoc \parentOf \cDoc$ and $\cDoc \not\parentOfSess^* \aDoc$, or
-  $\bDoc \parentOfSess \cDoc$ and $\cDoc \parentOfSess^* \aDoc$, 
+  $\bDoc \parentOfSess \cDoc$ and $\cDoc \parentOfSess^* \aDoc$,
 \item $\eqSess'$ is $\eqSess$, and
 \item $\rootDoc' \parentOf'^* \aDoc$.
 \end{itemize}
@@ -116,7 +116,7 @@ Define \emph{$\aNH$ goes forwards by $n$ to $\aNH'$} when:
 
 [I suspect none of these are true of the current spec, can we find a model in which
   they are true?]
-  
+
 \section{Experiments}
 
 [A write-up of CGB's experiments with how different browsers handle navigation.]
