@@ -1,5 +1,9 @@
 # Servo Navigation Proposal
 ### Terminology
+ - **Constellation**: The thread that controls a collection of related web content. This could be thought of as an owner of a single tab in a tabbed web browser; it encapsulates session history, knows about all frames in a frame tree, and is the owner of the pipeline for each contained frame. (See [Servo Glossary](https://github.com/servo/servo/blob/master/docs/glossary.md))
+
+ - **Pipeline**: A unit encapsulating a means of communication with the script, layout, and renderer threads for a particular document. Each pipeline has a globally-unique id which can be used to access it from the constellation. (See [Servo Glossary](https://github.com/servo/servo/blob/master/docs/glossary.md))
+
  - **Frame**: A web page including pages in iframes. Stores session history.
 
  The session history for a `Frame` is stored in 3 parts
@@ -7,9 +11,13 @@
   2. `current`: The active `entry` for this `Frame`
   3. `next`: A `Vec` containing the entries that were added after `current`
 
+ - **PipelineId**: Used to identify a **pipeline** in the constellation.
+
+ - **FrameId**: Used to identify a **frame** in the constellation.
+
  - **Frame entry**: A recorded navigation stored by `Frame`.
 
-  The **entry** stores the `PipelineId` that should be activated when the entry is navigated to. It also stores the time at which the entry was added to its `Frame` and the time at which the `Frame` was navigated from (This will happen when `Frame::load` is called). If this entry is new and has not been navigated from, the navigated from time is set to `None`.
+  The **entry** stores the `PipelineId` that should be activated when the entry is navigated to. It also stores the time at which the entry was added to its `Frame`.
 
  - **Frame Tree**: A tree of all active Frames accessible from a single root Frame.
 
@@ -19,45 +27,59 @@
 
  - **Joint Session History**: The union of the all the Frame entries in a full frame tree
 
+ - **Frame Iterator**: Iterates over all the entries in a **frame** ordered by the time each entry was added to the **frame**.
+
  - **History Iterator**: Iterates over the **joint session history**.
 
  - **Navigation Direction**: This is an enum that stores a direction: `Forward` or `Back` and an unsigned integer representing the delta to navigate in that direction.
 
+ - **Top Level Browsing Context**: A browsing context that has no parent. This is usually the root **frame** in the constellation or a mozbrowser **frame**.
+
 ### Joint Session History
 The **joint session history** is the union of the `Frame` entries ordered chronologically. The Servo implementation will use a lazily generated iterator to act as the **joint session history** called the `HistoryIterator`.
 
+### Frame Iterator
+The **frame iterator** stores an iterator over its **frame**'s next and prev vectors and the **frame**'s current entry. The iterator will return entries in the order they were added to the **frame**. The **frame iterator** struct also contains the length of the prev vector; this will be used when calculating the index of the active joint session history entry.
+
+Steps for the **next** algorithm:
+1. Pop the `prev` iterator, if the result is `Some(entry)` return the entry and abort these steps.
+2. If `current` is `Some(entry)` return the entry and abort these steps.
+3. Pop the `next` iterator, if the result is `Some(entry)` return the entry and abort these steps.
+4. Return `None`.
+
 ### History Iterator
-The `HistoryIterator` is generated based on 2 parameters: the _root frame_ and the _navigation direction_.
+The `HistoryIterator` is generated based on a _full frame tree_.
 
 Steps for creation of the `HistoryIterator`:
 1. Get the **full frame tree** starting from the _root frame_.
-2. Iterate through each `Frame` in the **full frame tree**.
-  1. Get an iterator over `frame.prev` or `frame.next` depending on the _navigation direction_.
-  2. Reverse the iterator and make it `Peekable`.
-3. Collect all of the iterators and `FrameId`.
-4. Create the `HistoryIterator` by passing in the collected iterators as the `stack` and the _navigation direction_ as the direction.
+2. Collect a peekable **frame iterator** from each **frame** into a vector.
+3. Create the `HistoryIterator` with the vector as the `stack`.
 
-History Iterator `next` algorithm:
-1. Peek on each of the iterators stored on the stack for their next entry.
-2. Determine which `Frame` should navigate:
-  - If the navigation direction is `Forward`:
-    1. Find the entry that has the lowest time for when the entry was added to its `Frame`
-  - If the navigation direction is `Back`:
-    1. Find the entry that has the highest time for when that entry was navigated from.
-3. Pop the iterator from the `Frame` that was determined should be navigated and return the popped entry.
+Steps for the **next** algorithm:
+1. Peek each **frame iterator** and find the one that has the smallest time that the entry was added to the **frame**.
+2. Return the **entry**.
+
+Steps for calculating the active entry in the **joint session history**:
+1. Iterate through all of the **frame iterators** on the stack and sum the prev vec lengths.
+2. Return the summed value.
 
 ### Navigation By a Delta
 Steps for navigating by a delta:
 1. Find the _root frame_ from the given `PipelineId`.
-  - Search upward through the frame tree until you hit the root `Frame` or, if mozbrowser is enabled, a mozbrowser `Frame`.
-1. Construct a `HistoryIterator` from the _root frame_ and _navigation direction_.
-2. Get _delta_ from the _navigation direction_
-3. Find the `nth(delta)` entry of the `HistoryIterator`. This is the _specified entry_.
-4. Run the **jump to time** algorithm on each `Frame` in the **full frame tree**.
+  - Search upward through the frame tree until you hit the root `Frame` or, if mozbrowser is enabled, a mozbrowser `Frame`. This is also called the **top level browsing context**.
+2. Construct a `HistoryIterator` from the _root frame_.
+3. Get the current _index of the active entry_ in the **joint session history** from the **history iterator**.
+4. Get _delta_ from the _navigation direction_.
+5. Calculate the index for the _specified entry_ by subtracting delta from the _index of the active entry_.
+4. Find the `nth(index of specified entry)` entry of the `HistoryIterator`. This is the _specified entry_.
+5. Run the **jump to time** algorithm on each `Frame` in the **full frame tree**.
   - If _navigation direction_ is forward, pass the the time the entry was added to its `Frame` and pass the _navigation direction_.
   - If _navigation direction_ is back, pass the the time the entry was navigated from to its `Frame` and pass the _navigation direction_.
 
 ### Frame
+
+**These steps need to be updated. I would like to avoid the jump to time algorithm.**
+
 Steps for running **jump to time** algorithm:
 - If the _navigation direction_ is `Forward`:
   1. If `frame.next` is empty, abort these steps.
