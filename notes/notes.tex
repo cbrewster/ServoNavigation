@@ -9,15 +9,17 @@
 \date{DRAFT of 2016-06-13}
 
 \usepackage{amssymb}
+\usepackage{tikz}
+\usetikzlibrary{fit}
 
 % Macros, so we can change notation easily
 \newcommand{\aNH}{H}
 \newcommand{\Docs}{D}
 \newcommand{\Active}{A}
-\newcommand{\parentOf}{\rightsquigarrow}
-\newcommand{\parentOfActive}{\rightarrow}
-\newcommand{\childOf}{\leftsquigarrow}
-\newcommand{\activeChildOf}{\leftarrow}
+\newcommand{\parentOf}{\rightarrow}
+\newcommand{\parentOfActive}{\twoheadrightarrow}
+\newcommand{\childOf}{\larrow}
+\newcommand{\activeChildOf}{\twoheadleftarrow}
 \newcommand{\leChron}{\le}
 \newcommand{\ltChron}{<}
 \newcommand{\geChron}{\ge}
@@ -30,6 +32,9 @@
 \newcommand{\bDoc}{e}
 \newcommand{\cDoc}{f}
 \newcommand{\st}{\mathbin.}
+\newtheorem{goal}{Goal}
+\newtheorem{patch}{Patch}
+\newtheorem{counterexample}{Counterexample}
 
 \begin{document}
 
@@ -101,12 +106,6 @@ Define \emph{$\aNH$ traverses to $\aDoc$ in $\aNH'$} when:
 \item $\bDoc\in\Active'$ whenever $\aDoc\not\eqSess\bDoc \in \Active$, or
   $\aDoc=\bDoc$.
 \end{itemize}
-%% Define \emph{$\aNH$ goes back by $n$ to $\aNH'$} when:
-%% \begin{itemize}
-%% \item the joint session past of $\aNH$ is $\aDoc_1 \gtChron \cdots \gtChron \aDoc_n \gtChron \cdots$,
-%% \item there is some $\aNH=\aNH_0,\ldots,\aNH_n=\aNH'$, such that
-%% \item $H_{i-1}$ traverses to $d_i$ in $H_i$ for each $1 \le i \le n$.
-%% \end{itemize}
 Define \emph{$\aNH$ goes back by $n$ to $\aNH'$} when:
 \begin{itemize}
 \item the joint session past of $\aNH$ is $\aDoc_1 \gtChron \cdots \gtChron \aDoc_n \gtChron \cdots$,
@@ -117,14 +116,10 @@ Define \emph{$\aNH$ goes forwards by $n$ to $\aNH'$} when:
 \item the joint session future of $\aNH$ is $\aDoc_1 \ltChron \cdots \ltChron \aDoc_n \ltChron \cdots$,
 \item $H$ traverses to $d_n$ in $H'$
 \end{itemize}
-%% Define \emph{$\aNH$ goes forwards by $n$ to $\aNH'$} when:
-%% \begin{itemize}
-%% \item the joint session future of $\aNH$ is $\aDoc_1 \ltChron \cdots \ltChron \aDoc_n \ltChron \cdots$,
-%% \item there is some $\aNH=\aNH_0,\ldots,\aNH_n=\aNH'$, such that
-%% \item $H_{i-1}$ traverses to $d_i$ in $H_i$ for each $1 \le i \le n$.
-%% \end{itemize}
-
+[This defn is meant to align with the spec.]
+    
 \section{Properties}
+
 
 [State some goals, e.g. go($\delta$);go($\delta'$) is the same as go($\delta+\delta'$),
   navigate;go($-1$) has the same fully active documents as doing nothing,
@@ -132,7 +127,157 @@ Define \emph{$\aNH$ goes forwards by $n$ to $\aNH'$} when:
 
 [I suspect none of these are true of the current spec, can we find a model in which
   they are true?]
-  
+
+\begin{goal}
+  If $H$ goes forward by $n$ to $H'$
+  and $H'$ goes forward by $n'$ to $H''$
+  then $H$ goes forward by $n+n'$ to $H'$.
+\end{goal}
+
+\begin{counterexample}
+  Let $H$ be:
+  \[\begin{tikzpicture}
+    \node(0) at (0,0){\bf 0};
+    \node(1) at (-2,-1){\bf 1};
+    \node(2) at (-1,-1){\rm 2};
+    \node(3) at (1,-1){\bf 3};
+    \node(4) at (2,-1){\rm 4};
+    \node[draw,dotted,fit=(0)] {};
+    \node[draw,dotted,fit=(1)(2)] {};
+    \node[draw,dotted,fit=(3)(4)] {};    
+    \draw[->](0)--(1);
+    \draw[->](0)--(3);
+  \end{tikzpicture}\]
+  which moves forwards by $1$ to:
+  \[\begin{tikzpicture}
+    \node(0) at (0,0){\bf 0};
+    \node(1) at (-2,-1){\rm1};
+    \node(2) at (-1,-1){\bf 2};
+    \node(3) at (1,-1){\bf 3};
+    \node(4) at (2,-1){\rm 4};
+    \node[draw,dotted,fit=(0)] {};
+    \node[draw,dotted,fit=(1)(2)] {};
+    \node[draw,dotted,fit=(3)(4)] {};    
+    \draw[->](0)--(2);
+    \draw[->](0)--(3);
+  \end{tikzpicture}\]
+  which in turn moves forwards by $1$ to:
+  \[\begin{tikzpicture}
+    \node(0) at (0,0){\bf 0};
+    \node(1) at (-2,-1){\rm1};
+    \node(2) at (-1,-1){\bf 2};
+    \node(3) at (1,-1){\rm 3};
+    \node(4) at (2,-1){\bf 4};
+    \node[draw,dotted,fit=(0)] {};
+    \node[draw,dotted,fit=(1)(2)] {};
+    \node[draw,dotted,fit=(3)(4)] {};    
+    \draw[->](0)--(2);
+    \draw[->](0)--(4);
+  \end{tikzpicture}\]
+  but $H$ goes forward by $2$ to:
+  \[\begin{tikzpicture}
+    \node(0) at (0,0){\bf 0};
+    \node(1) at (-2,-1){\bf 1};
+    \node(2) at (-1,-1){\rm 2};
+    \node(3) at (1,-1){\rm 3};
+    \node(4) at (2,-1){\bf 4};
+    \node[draw,dotted,fit=(0)] {};
+    \node[draw,dotted,fit=(1)(2)] {};
+    \node[draw,dotted,fit=(3)(4)] {};    
+    \draw[->](0)--(1);
+    \draw[->](0)--(4);
+  \end{tikzpicture}\]
+\end{counterexample}
+%
+This counterexample is caused by the definition of `move forwards' which
+only traverses one document's session history. Instead, we should traverse
+the history of all $n$ documents.
+
+\begin{patch}
+Define \emph{$\aNH$ goes forwards by $n$ to $\aNH'$} when:
+\begin{itemize}
+\item the joint session future of $\aNH$ is $\aDoc_1 \ltChron \cdots \ltChron \aDoc_n \ltChron \cdots$,
+\item there is some $\aNH=\aNH_0,\ldots,\aNH_n=\aNH'$, such that
+\item $H_{i-1}$ traverses to $d_i$ in $H_i$ for each $1 \le i \le n$.
+\end{itemize}
+Define \emph{$\aNH$ goes back by $n$ to $\aNH'$} when:
+\begin{itemize}
+\item the joint session past of $\aNH$ is $\aDoc_1 \gtChron \cdots \gtChron \aDoc_n \gtChron \cdots$,
+\item there is some $\aNH=\aNH_0,\ldots,\aNH_n=\aNH'$, such that
+\item $H_{i-1}$ traverses to $d_i$ in $H_i$ for each $1 \le i \le n$.
+\end{itemize}
+\end{patch}
+Unfortunately, Goal~\ref{goal:homomorphism} is not satisfied,
+even with this patch.
+\begin{counterexample}
+  Let $H$ be:
+  \[\begin{tikzpicture}
+    \node(0) at (0,0){\bf 0};
+    \node(1) at (-1,-1){\bf 1};
+    \node(2) at (1,-1){\rm 2};
+    \node(3) at (0,-2){\bf 3};
+    \node(4) at (2,-2){\rm 4};
+    \node(5) at (3,0){\rm 5};
+    \node[draw,dotted,fit=(0)(5)] {};    
+    \node[draw,dotted,fit=(1)(2)] {};
+    \node[draw,dotted,fit=(3)(4)] {};    
+    \draw[->](0)--(1);
+    \draw[->](2)--(3);
+  \end{tikzpicture}\]
+  which moves forwards by $1$ to:
+  \[\begin{tikzpicture}
+    \node(0) at (0,0){\bf 0};
+    \node(1) at (-1,-1){\rm 1};
+    \node(2) at (1,-1){\bf 2};
+    \node(3) at (0,-2){\bf 3};
+    \node(4) at (2,-2){\rm 4};
+    \node(5) at (3,0){\rm 5};
+    \node[draw,dotted,fit=(0)(5)] {};    
+    \node[draw,dotted,fit=(1)(2)] {};
+    \node[draw,dotted,fit=(3)(4)] {};    
+    \draw[->](0)--(2);
+    \draw[->](2)--(3);
+  \end{tikzpicture}\]
+  which in turn moves forwards by $1$ to:
+  \[\begin{tikzpicture}
+    \node(0) at (0,0){\bf 0};
+    \node(1) at (-1,-1){\rm 1};
+    \node(2) at (1,-1){\bf 2};
+    \node(3) at (0,-2){\rm 3};
+    \node(4) at (2,-2){\bf 4};
+    \node(5) at (3,0){\rm 5};
+    \node[draw,dotted,fit=(0)(5)] {};    
+    \node[draw,dotted,fit=(1)(2)] {};
+    \node[draw,dotted,fit=(3)(4)] {};    
+    \draw[->](0)--(2);
+    \draw[->](2)--(4);
+  \end{tikzpicture}\]
+  but $H$ goes forward by $2$ to:
+  \[\begin{tikzpicture}
+    \node(0) at (0,0){\rm 0};
+    \node(1) at (-1,-1){\rm 1};
+    \node(2) at (1,-1){\bf 2};
+    \node(3) at (0,-2){\bf 3};
+    \node(4) at (2,-2){\rm 4};
+    \node(5) at (3,0){\bf 5};
+    \node[draw,dotted,fit=(0)(5)] {};    
+    \node[draw,dotted,fit=(1)(2)] {};
+    \node[draw,dotted,fit=(3)(4)] {};    
+    \draw[->](0)--(2);
+    \draw[->](2)--(3);
+  \end{tikzpicture}\]
+\end{counterexample}
+The problem this time is that the definition of `joint session history' only includes
+the fully active documents, not all active documents.
+
+\begin{patch}
+Define:
+\begin{itemize}
+\item the \emph{joint session future} is $\{ \bDoc \mid \exists \aDoc \in \Active \st \aDoc \ltSess \bDoc \}$, and
+\item the \emph{joint session past} is $\{ \bDoc \mid \exists \aDoc \in \Active \st \aDoc \gtSess \bDoc \}$.
+\end{itemize}
+\end{patch}
+
 \section{Experiments}
 
 [A write-up of CGB's experiments with how different browsers handle navigation.]
