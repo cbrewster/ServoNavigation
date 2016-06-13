@@ -6,15 +6,18 @@
   \and
   Connor G.~Brewster
 }
-\date{DRAFT of 2016-06-12}
+\date{DRAFT of 2016-06-13}
 
 \usepackage{amssymb}
 
 % Macros, so we can change notation easily
 \newcommand{\aNH}{H}
 \newcommand{\Docs}{D}
-\newcommand{\parentOf}{\rightarrow}
-\newcommand{\childOf}{\leftarrow}
+\newcommand{\Active}{A}
+\newcommand{\parentOf}{\rightsquigarrow}
+\newcommand{\parentOfActive}{\rightarrow}
+\newcommand{\childOf}{\leftsquigarrow}
+\newcommand{\activeChildOf}{\leftarrow}
 \newcommand{\leChron}{\le}
 \newcommand{\ltChron}{<}
 \newcommand{\geChron}{\ge}
@@ -22,11 +25,11 @@
 \newcommand{\eqSess}{\sim}
 \newcommand{\ltSess}{\lesssim}
 \newcommand{\gtSess}{\gtrsim}
-\newcommand{\parentOfSess}{\rightsquigarrow}
 \newcommand{\rootDoc}{d_0}
 \newcommand{\aDoc}{d}
 \newcommand{\bDoc}{e}
 \newcommand{\cDoc}{f}
+\newcommand{\st}{\mathbin.}
 
 \begin{document}
 
@@ -42,38 +45,40 @@
 
 \section{Preliminaries}
 
-[Define forest, tree, total order, equivalence.]
+[Define forest, tree, root, total order, equivalence.]
 
 \section{Model}
 
-A \emph{navigation history} $\aNH=(\Docs,{\parentOf},{\leChron},{\eqSess},{\rootDoc})$ consists of:
+A \emph{navigation history} $\aNH=(\Docs,{\parentOf},{\leChron},{\eqSess},\Active)$ consists of:
 \begin{itemize}
 \item a forest $(\Docs,{\parentOf})$ (the \emph{document hierarchy}),
 \item a total order $(\Docs,{\leChron})$ (the \emph{chronological order}),
 \item an equivalence relation $(\Docs,{\eqSess})$ (the \emph{same-session equivalence}), and
-\item an element $\rootDoc \in \Docs$ (the \emph{root document}),
+\item a set $\Active \subseteq \Docs$ (the \emph{active documents}),
 \end{itemize}
 such that:
 \begin{itemize}
-\item for every $\aDoc \eqSess \rootDoc$, there is no $\bDoc \parentOf \aDoc$,
-\item for every $\aDoc \parentOf \bDoc$, we have $\aDoc \leChron \bDoc$, and
-\item if $\aDoc \parentOf \bDoc \eqSess \bDoc' \childOf \aDoc'$
-   then $\bDoc=\bDoc'$.
+\item for every $\aDoc$ there is a unique $\aDoc'\in\Active$ such that $\aDoc \eqSess \aDoc'$,
+\item for every $\aDoc \parentOf \bDoc \eqSess \bDoc'$
+  we have $\aDoc \parentOf \bDoc'$, and
+\item for every $\aDoc \parentOf \bDoc$, we have $\aDoc \leChron \bDoc$.
 \end{itemize}
 Define:
 \begin{itemize}
-\item a document $\aDoc$ is \emph{fully active} whenever $\rootDoc \parentOf^* \aDoc$,
+\item $\rootDoc$ is the unique active root document,
+\item $\aDoc \parentOfActive \bDoc$ when $\aDoc \parentOf \bDoc$ and $\bDoc \in \Active$,
+\item a document $\aDoc$ is \emph{fully active} whenever $\rootDoc \parentOfActive^* \aDoc$,
 \item $\aDoc \ltSess \bDoc$ whenever $\aDoc \eqSess \bDoc$ and $\aDoc \ltChron \bDoc$,
-\item $\aDoc \parentOfSess \bDoc$ whenever $\aDoc \parentOf \bDoc' \eqSess \bDoc$,
 \item the \emph{session future} of $\aDoc$ is $\{ \bDoc \mid \aDoc \ltSess \bDoc \}$,
 \item the \emph{session past} of $\aDoc$ is $\{ \bDoc \mid \aDoc \gtSess \bDoc \}$,
-\item the \emph{joint session future} is $\{ \bDoc \mid \rootDoc \parentOf^* \aDoc \ltSess \bDoc \}$,
-\item the \emph{joint session past} is $\{ \bDoc \mid \rootDoc \parentOf^* \aDoc \gtSess \bDoc \}$,
+\item the \emph{joint session future} is $\{ \bDoc \mid \exists \aDoc \st \rootDoc \parentOfActive^* \aDoc \ltSess \bDoc \}$,
+\item the \emph{joint session past} is $\{ \bDoc \mid \exists \aDoc \st \rootDoc \parentOfActive^* \aDoc \gtSess \bDoc \}$,
 \end{itemize}
 Define \emph{$\aDoc$ in $\aNH$ naviagates to $\aDoc'$ in $\aNH'$} when:
 \begin{itemize}
-\item $\aDoc'\notin\Docs$,
-\item $\Docs' = \Docs \cup \{\aDoc'\} \setminus \{ \bDoc \mid \aDoc \ltSess \bDoc \}$,
+\item $\aDoc\in\Active$ and $\aDoc'\notin\Docs$,
+\item $\Docs' = \Docs \cup \{\aDoc'\} \setminus
+  \{ \cDoc \mid \exists \bDoc \st \aDoc \ltSess \bDoc \parentOf^* \cDoc \}$,
 \item $\bDoc \leChron' \cDoc$ whenever
   $\bDoc \leChron \cDoc$, or $\cDoc = \aDoc'$,
 \item $\bDoc \parentOf' \cDoc$ whenever
@@ -81,37 +86,48 @@ Define \emph{$\aDoc$ in $\aNH$ naviagates to $\aDoc'$ in $\aNH'$} when:
   $\bDoc \parentOf \aDoc$ and $\cDoc = \aDoc'$,
 \item $\bDoc \eqSess' \cDoc$ whenever
   $\bDoc \eqSess \cDoc$, or
-  $\bDoc \eqSess \aDoc$ and $\cDoc = \aDoc'$, and
-\item $\rootDoc' = \rootDoc$ and $\rootDoc \neq \aDoc$, or
-  $\rootDoc' = \aDoc'$ and $\rootDoc = \aDoc$.
+  $\bDoc \eqSess \aDoc$ and $\cDoc = \aDoc'$, or
+  $\aDoc \eqSess \cDoc$ and $\bDoc = \aDoc'$, and
+\item $\bDoc \in \Active'$ whenever
+  $\aDoc \in \Active$ and $\bDoc=\aDoc'$, or
+  $\bDoc \in \Active$ and $\bDoc\ne\aDoc$.
 \end{itemize}
 Define \emph{$\aNH$ traverses to $\aDoc$ in $\aNH'$} when:
 \begin{itemize}
 \item $\Docs'$ is $\Docs$,
 \item $\leChron'$ is $\leChron$,
-\item $\bDoc \parentOf' \cDoc$ whenever
-  $\bDoc \parentOf \cDoc$ and $\cDoc \not\parentOfSess^* \aDoc$, or
-  $\bDoc \parentOfSess \cDoc$ and $\cDoc \parentOfSess^* \aDoc$, 
+\item $\parentOf'$ is $\parentOf$,
 \item $\eqSess'$ is $\eqSess$, and
-\item $\rootDoc' \parentOf'^* \aDoc$.
+\item $\bDoc\in\Active'$ whenever $\aDoc\not\eqSess\bDoc \in \Active$, or
+  $\aDoc=\bDoc$.
 \end{itemize}
+%% Define \emph{$\aNH$ goes back by $n$ to $\aNH'$} when:
+%% \begin{itemize}
+%% \item the joint session past of $\aNH$ is $\aDoc_1 \gtChron \cdots \gtChron \aDoc_n \gtChron \cdots$,
+%% \item there is some $\aNH=\aNH_0,\ldots,\aNH_n=\aNH'$, such that
+%% \item $H_{i-1}$ traverses to $d_i$ in $H_i$ for each $1 \le i \le n$.
+%% \end{itemize}
 Define \emph{$\aNH$ goes back by $n$ to $\aNH'$} when:
 \begin{itemize}
 \item the joint session past of $\aNH$ is $\aDoc_1 \gtChron \cdots \gtChron \aDoc_n \gtChron \cdots$,
-\item there is some $\aNH=\aNH_0,\ldots,\aNH_n=\aNH'$, such that
-\item $H_{i-1}$ traverses to $d_i$ in $H_i$ for each $1 \le i \le n$.
+\item $H$ traverses to $d_n$ in $H'$
 \end{itemize}
 Define \emph{$\aNH$ goes forwards by $n$ to $\aNH'$} when:
 \begin{itemize}
 \item the joint session future of $\aNH$ is $\aDoc_1 \ltChron \cdots \ltChron \aDoc_n \ltChron \cdots$,
-\item there is some $\aNH=\aNH_0,\ldots,\aNH_n=\aNH'$, such that
-\item $H_{i-1}$ traverses to $d_i$ in $H_i$ for each $1 \le i \le n$.
+\item $H$ traverses to $d_n$ in $H'$
 \end{itemize}
+%% Define \emph{$\aNH$ goes forwards by $n$ to $\aNH'$} when:
+%% \begin{itemize}
+%% \item the joint session future of $\aNH$ is $\aDoc_1 \ltChron \cdots \ltChron \aDoc_n \ltChron \cdots$,
+%% \item there is some $\aNH=\aNH_0,\ldots,\aNH_n=\aNH'$, such that
+%% \item $H_{i-1}$ traverses to $d_i$ in $H_i$ for each $1 \le i \le n$.
+%% \end{itemize}
 
 \section{Properties}
 
 [State some goals, e.g. go($\delta$);go($\delta'$) is the same as go($\delta+\delta'$),
-  navigate;go($-1$) has the same active documents as doing nothing,
+  navigate;go($-1$) has the same fully active documents as doing nothing,
   session history can be implemented effeciently in memory...]
 
 [I suspect none of these are true of the current spec, can we find a model in which
