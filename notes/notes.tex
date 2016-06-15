@@ -16,6 +16,7 @@
 \newcommand{\aNH}{H}
 \newcommand{\Docs}{D}
 \newcommand{\Active}{A}
+\newcommand{\FullyActive}{F\!A}
 \newcommand{\parentOf}{\rightarrow}
 \newcommand{\parentOfActive}{\twoheadrightarrow}
 \newcommand{\childOf}{\larrow}
@@ -76,12 +77,13 @@ Define:
 \begin{itemize}
 \item $\rootDoc$ is the unique active root document,
 \item $\aDoc \parentOfActive \bDoc$ when $\aDoc \parentOf \bDoc$ and $\bDoc \in \Active$,
-\item a document $\aDoc$ is \emph{fully active} whenever $\rootDoc \parentOfActive^* \aDoc$,
+\item $\FullyActive = \{ \aDoc \mid \rootDoc \parentOfActive^* \aDoc \}$
+  (the \emph{fully active} documents),
 \item $\aDoc \ltSess \bDoc$ whenever $\aDoc \eqSess \bDoc$ and $\aDoc \ltChron \bDoc$,
 \item the \emph{session future} of $\aDoc$ is $\{ \bDoc \mid \aDoc \ltSess \bDoc \}$,
 \item the \emph{session past} of $\aDoc$ is $\{ \bDoc \mid \aDoc \gtSess \bDoc \}$,
-\item the \emph{joint session future} is $\{ \bDoc \mid \exists \aDoc \st \rootDoc \parentOfActive^* \aDoc \ltSess \bDoc \}$,
-\item the \emph{joint session past} is $\{ \bDoc \mid \exists \aDoc \st \rootDoc \parentOfActive^* \aDoc \gtSess \bDoc \}$,
+\item the \emph{joint session future} is $\{ \bDoc \mid \exists \aDoc \in \FullyActive \st \aDoc \ltSess \bDoc \}$,
+\item the \emph{joint session past} is $\{ \bDoc \mid \exists \aDoc \in \FullyActive \st \aDoc \gtSess \bDoc \}$,
 \end{itemize}
 Define \emph{$\aDoc$ in $\aNH$ naviagates to $\aDoc'$ in $\aNH'$} when:
 \begin{itemize}
@@ -101,7 +103,7 @@ Define \emph{$\aDoc$ in $\aNH$ naviagates to $\aDoc'$ in $\aNH'$} when:
   $\aDoc \in \Active$ and $\bDoc=\aDoc'$, or
   $\bDoc \in \Active$ and $\bDoc\ne\aDoc$.
 \end{itemize}
-Define \emph{$\aNH$ traverses to $\aDoc$ in $\aNH'$} when:
+Define \emph{$\aNH$ traverses the history to $\aDoc$ in $\aNH'$} when:
 \begin{itemize}
 \item $\Docs'$ is $\Docs$,
 \item $\leChron'$ is $\leChron$,
@@ -110,16 +112,18 @@ Define \emph{$\aNH$ traverses to $\aDoc$ in $\aNH'$} when:
 \item $\bDoc\in\Active'$ whenever $\aDoc\not\eqSess\bDoc \in \Active$, or
   $\aDoc=\bDoc$.
 \end{itemize}
-Define \emph{$\aNH$ goes back by $n$ to $\aNH'$} when:
+Define \emph{$\aNH$ traverses the history by $+\delta$ to $\aNH'$} when:
 \begin{itemize}
-\item the joint session past of $\aNH$ is $\aDoc_1 \gtChron \cdots \gtChron \aDoc_n \gtChron \cdots$,
-\item $H$ traverses to $d_n$ in $H'$
+\item the joint session past of $\aNH$ is $\aDoc_1 \gtChron \cdots \gtChron \aDoc_\delta \gtChron \cdots$,
+\item $H$ traverses the history to $d_\delta$ in $H'$
 \end{itemize}
-Define \emph{$\aNH$ goes forwards by $n$ to $\aNH'$} when:
+Define \emph{$\aNH$ traverses the history by $-\delta$ to $\aNH'$} when:
 \begin{itemize}
-\item the joint session future of $\aNH$ is $\aDoc_1 \ltChron \cdots \ltChron \aDoc_n \ltChron \cdots$,
-\item $H$ traverses to $d_n$ in $H'$
+\item the joint session future of $\aNH$ is $\aDoc_1 \ltChron \cdots \ltChron \aDoc_\delta \ltChron \cdots$,
+\item $H$ traverses the history to $d_\delta$ in $H'$
 \end{itemize}
+Define \emph{$\aNH$ traverses the history by $0$ to $\aNH'$} when $\aNH=\aNH'$.
+
 [This defn is meant to align with the spec.]
     
 \section{Properties}
@@ -133,9 +137,10 @@ Define \emph{$\aNH$ goes forwards by $n$ to $\aNH'$} when:
   they are true?]
 
 \begin{goal}
-  If $H$ goes forward by $n$ to $H'$
-  and $H'$ goes forward by $n'$ to $H''$
-  then $H$ goes forward by $n+n'$ to $H'$.
+\label{goal:homomorphism}
+  If $H$ traverses the history by $\delta$ to $H'$
+  and $H'$ traverses the history by $\delta'$ to $H''$
+  then $H$ traverses the history by $\delta+\delta'$ to $H''$.
 \end{goal}
 
 \begin{counterexample}
@@ -152,7 +157,7 @@ Define \emph{$\aNH$ goes forwards by $n$ to $\aNH'$} when:
     \draw[->](0)--(1);
     \draw[->](0)to[out=0,in=150](3);
   \end{tikzpicture}\]
-  which moves forwards by $1$ to:
+  which traverses the history by $1$ to:
   \[\begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
     \node[doc](1) at (1,-1){1};
@@ -165,7 +170,7 @@ Define \emph{$\aNH$ goes forwards by $n$ to $\aNH'$} when:
     \draw[->](0)--(2);
     \draw[->](0)to[out=0,in=150](3);
   \end{tikzpicture}\]
-  which in turn moves forwards by $1$ to:
+  which traverses the history by $1$ to:
   \[\begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
     \node[doc](1) at (1,-1){1};
@@ -178,7 +183,7 @@ Define \emph{$\aNH$ goes forwards by $n$ to $\aNH'$} when:
     \draw[->](0)--(2);
     \draw[->](0)to[out=0,in=150](4);
   \end{tikzpicture}\]
-  but $H$ goes forward by $2$ to:
+  but $H$ traverses the history $2$ to:
   \[\begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
     \node[doc,active,fully](1) at (1,-1){1};
@@ -193,22 +198,22 @@ Define \emph{$\aNH$ goes forwards by $n$ to $\aNH'$} when:
   \end{tikzpicture}\]
 \end{counterexample}
 %
-This counterexample is caused by the definition of `move forwards' which
+This counterexample is caused by the definition of `traverses the history by $\delta$' which
 only traverses one document's session history. Instead, we should traverse
-the history of all $n$ documents.
+the history of all $\delta$ documents.
 
 \begin{patch}
-Define \emph{$\aNH$ goes forwards by $n$ to $\aNH'$} when:
+Define \emph{$\aNH$ traverses the history by $+\delta$ to $\aNH'$} when:
 \begin{itemize}
-\item the joint session future of $\aNH$ is $\aDoc_1 \ltChron \cdots \ltChron \aDoc_n \ltChron \cdots$,
-\item there is some $\aNH=\aNH_0,\ldots,\aNH_n=\aNH'$, such that
-\item $H_{i-1}$ traverses to $d_i$ in $H_i$ for each $1 \le i \le n$.
+\item the joint session future of $\aNH$ is $\aDoc_1 \ltChron \cdots \ltChron \aDoc_\delta \ltChron \cdots$,
+\item there is some $\aNH=\aNH_0,\ldots,\aNH_\delta=\aNH'$, such that
+\item $H_{i-1}$ traverses the history to $d_i$ in $H_i$ for each $1 \le i \le \delta$.
 \end{itemize}
-Define \emph{$\aNH$ goes back by $n$ to $\aNH'$} when:
+Define \emph{$\aNH$ traverses the history by $-\delta$ to $\aNH'$} when:
 \begin{itemize}
-\item the joint session past of $\aNH$ is $\aDoc_1 \gtChron \cdots \gtChron \aDoc_n \gtChron \cdots$,
-\item there is some $\aNH=\aNH_0,\ldots,\aNH_n=\aNH'$, such that
-\item $H_{i-1}$ traverses to $d_i$ in $H_i$ for each $1 \le i \le n$.
+\item the joint session past of $\aNH$ is $\aDoc_1 \gtChron \cdots \gtChron \aDoc_\delta \gtChron \cdots$,
+\item there is some $\aNH=\aNH_0,\ldots,\aNH_\delta=\aNH'$, such that
+\item $H_{i-1}$ traverses the history to $d_i$ in $H_i$ for each $1 \le i \le \delta$.
 \end{itemize}
 \end{patch}
 Unfortunately, Goal~\ref{goal:homomorphism} is not satisfied,
