@@ -287,6 +287,43 @@ Define:
 \end{itemize}
 \end{patch}
 
+\begin{goal}
+  If $\aDoc$ in $\aNH$ navigates to $\aDoc'$ in $\aNH'$,
+  and $\aNH'$ traverses the history by $-1$ to $\aNH''$,
+  then $\FullyActive=\FullyActive''$.
+\end{goal}
+
+\begin{counterexample}
+  \[\begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc,active,fully](1) at (1,-1){1};
+    \node[doc](2) at (2,0){2};
+    \node[draw,dotted,fit=(0)(2)] {};    
+    \node[draw,dotted,fit=(1)]{};
+    \draw[->](0)--(1);
+  \end{tikzpicture}\]
+  navigates 1 to 3 in:
+  \[\begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc](1) at (1,-1){1};
+    \node[doc](2) at (2,0){2};
+    \node[doc,active,fully](3) at (3,-1){3};
+    \node[draw,dotted,fit=(0)(2)] {};    
+    \node[draw,dotted,fit=(1)(3)]{};
+    \draw[->](0)--(3);
+  \end{tikzpicture}\]
+  which traverses the history by $-1$ to:
+  \[\begin{tikzpicture}
+    \node[doc](0) at (0,0){0};
+    \node[doc](1) at (1,-1){1};
+    \node[doc,active,fully](2) at (2,0){2};
+    \node[doc,active](3) at (3,-1){3};
+    \node[draw,dotted,fit=(0)(2)] {};    
+    \node[draw,dotted,fit=(1)(3)]{};
+    \draw[->](0)--(3);
+  \end{tikzpicture}\]
+\end{counterexample}
+
 \section{Experiments}
 
 [A write-up of CGB's experiments with how different browsers handle navigation.]
