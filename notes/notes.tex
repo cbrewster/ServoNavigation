@@ -325,6 +325,73 @@ Define:
   \end{tikzpicture}\]
 \end{counterexample}
 
+\begin{counterexample}
+  \[\begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc](1) at (1,-1){1};
+    \node[doc](2) at (2,-2){2};
+    \node[doc,active,fully](3) at (3,-2){3};
+    \node[doc,jshactive,fully](4) at (4,-1){4};
+    \node[draw,dotted,fit=(0)]{};
+    \node[draw,dotted,fit=(1)(4)]{};
+    \node[draw,dotted,fit=(2)(3)]{};
+    \draw[->](0)--(4);
+    \draw[->](0)to[out=-20,in=120](3);
+  \end{tikzpicture}\]
+  which traverses the history by $-1$ to:
+  \[\begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc,active,fully](1) at (1,-1){1};
+    \node[doc](2) at (2,-2){2};
+    \node[doc,jshactive,fully](3) at (3,-2){3};
+    \node[doc](4) at (4,-1){4};
+    \node[draw,dotted,fit=(0)]{};
+    \node[draw,dotted,fit=(1)(4)]{};
+    \node[draw,dotted,fit=(2)(3)]{};
+    \draw[->](0)--(1);
+    \draw[->](0)to[out=-20,in=120](3);
+  \end{tikzpicture}\]
+  which traverses the history by $-1$ to:
+  \[\begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc,active,fully](1) at (1,-1){1};
+    \node[doc,jshactive,fully](2) at (2,-2){2};
+    \node[doc](3) at (3,-2){3};
+    \node[doc](4) at (4,-1){4};
+    \node[draw,dotted,fit=(0)]{};
+    \node[draw,dotted,fit=(1)(4)]{};
+    \node[draw,dotted,fit=(2)(3)]{};
+    \draw[->](0)--(1);
+    \draw[->](0)to[out=-20,in=90](2);
+  \end{tikzpicture}\]
+  which traverses the history by $1$ to:
+  \[\begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc,active,fully](1) at (1,-1){1};
+    \node[doc](2) at (2,-2){2};
+    \node[doc,jshactive,fully](3) at (3,-2){3};
+    \node[doc](4) at (4,-1){4};
+    \node[draw,dotted,fit=(0)]{};
+    \node[draw,dotted,fit=(1)(4)]{};
+    \node[draw,dotted,fit=(2)(3)]{};
+    \draw[->](0)--(1);
+    \draw[->](0)to[out=-20,in=120](3);
+  \end{tikzpicture}\]
+  which traverses the history by $1$ to:
+  \[\begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc](1) at (1,-1){1};
+    \node[doc](2) at (2,-2){2};
+    \node[doc,active,fully](3) at (3,-2){3};
+    \node[doc,jshactive,fully](4) at (4,-1){4};
+    \node[draw,dotted,fit=(0)]{};
+    \node[draw,dotted,fit=(1)(4)]{};
+    \node[draw,dotted,fit=(2)(3)]{};
+    \draw[->](0)--(4);
+    \draw[->](0)to[out=-20,in=120](3);
+  \end{tikzpicture}\]
+\end{counterexample}
+
 \section{Experiments}
 
 [A write-up of CGB's experiments with how different browsers handle navigation.]
