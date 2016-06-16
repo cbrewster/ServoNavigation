@@ -6,7 +6,7 @@
   \and
   Connor G.~Brewster
 }
-\date{DRAFT of 2016-06-15}
+\date{DRAFT of 2016-06-16}
 
 \usepackage{amssymb}
 \usepackage{tikz}
@@ -59,12 +59,13 @@
 
 \section{Model}
 
-A \emph{navigation history} $\aNH=(\Docs,{\parentOf},{\leChron},{\eqSess},\Active)$ consists of:
+A \emph{navigation history} $\aNH=(\Docs,\Active,{\parentOf},{\leChron},{\eqSess})$ consists of:
 \begin{itemize}
+\item a set $\Docs$ (the \emph{documents}),
+\item a subset $\Active \subseteq \Docs$ (the \emph{active} documents),
 \item a forest $(\Docs,{\parentOf})$ (the \emph{document hierarchy}),
-\item a total order $(\Docs,{\leChron})$ (the \emph{chronological order}),
-\item an equivalence relation $(\Docs,{\eqSess})$ (the \emph{same-session equivalence}), and
-\item a set $\Active \subseteq \Docs$ (the \emph{active documents}),
+\item a total order $(\Docs,{\leChron})$ (the \emph{chronological order}), and
+\item an equivalence relation $(\Docs,{\eqSess})$ (the \emph{same-session equivalence}).
 \end{itemize}
 such that:
 \begin{itemize}
@@ -85,32 +86,44 @@ Define:
 \item the \emph{joint session future} is $\{ \bDoc \mid \exists \aDoc \in \FullyActive \st \aDoc \ltSess \bDoc \}$,
 \item the \emph{joint session past} is $\{ \bDoc \mid \exists \aDoc \in \FullyActive \st \aDoc \gtSess \bDoc \}$,
 \end{itemize}
-Define \emph{$\aDoc$ in $\aNH$ navigates to $\aDoc'$ in $\aNH'$} when:
+Define \emph{deleting $\aDoc$ from $\aNH$}, when $\aDoc\not\in\FullyActive$, to be $\aNH'$ where:
 \begin{itemize}
-\item $\aDoc\in\Active$ and $\aDoc'\notin\Docs$,
-\item $\Docs' = \Docs \cup \{\aDoc'\} \setminus
-  \{ \cDoc \mid \exists \bDoc \st \aDoc \ltSess \bDoc \parentOf^* \cDoc \}$,
+\item $\Docs' = \aDoc \setminus \{ \bDoc \mid \aDoc\parentOf^* \bDoc \}$,
+\item $\bDoc\in\Active'$ whenever $\bDoc\in\Active$,
+\item $\bDoc\leChron'\cDoc$ whenever $\bDoc\leChron\cDoc$,
+\item $\bDoc\parentOf'\cDoc$ whenever $\bDoc\parentOf\cDoc$, and
+\item $\bDoc\eqSess'\cDoc$ whenever $\bDoc\eqSess\cDoc$.
+\end{itemize}
+Define \emph{replacing $\aDoc$ by $\aDoc'$ in $\aNH$}, where $\aDoc\in\Active$ and
+$\aDoc'\notin\Docs$, to be $\aNH'$ where:
+\begin{itemize}
+\item $\Docs' = \Docs \cup \{\aDoc'\}$,
+\item $\bDoc \in \Active'$ whenever
+  $\bDoc \in \Active$ and $\bDoc\ne\aDoc$, or
+  $\bDoc=\aDoc'$,
 \item $\bDoc \leChron' \cDoc$ whenever
   $\bDoc \leChron \cDoc$, or $\cDoc = \aDoc'$,
 \item $\bDoc \parentOf' \cDoc$ whenever
-  $\bDoc \parentOf \cDoc$ and $\cDoc \neq \aDoc$, or
-  $\bDoc \parentOf \aDoc$ and $\cDoc = \aDoc'$,
+  $\bDoc \parentOf \cDoc$, or
+  $\bDoc \parentOf \aDoc$ and $\cDoc = \aDoc'$, and
 \item $\bDoc \eqSess' \cDoc$ whenever
   $\bDoc \eqSess \cDoc$, or
   $\bDoc \eqSess \aDoc$ and $\cDoc = \aDoc'$, or
-  $\aDoc \eqSess \cDoc$ and $\bDoc = \aDoc'$, and
-\item $\bDoc \in \Active'$ whenever
-  $\aDoc \in \Active$ and $\bDoc=\aDoc'$, or
-  $\bDoc \in \Active$ and $\bDoc\ne\aDoc$.
+  $\aDoc \eqSess \cDoc$ and $\bDoc = \aDoc'$.
 \end{itemize}
-Define \emph{$\aNH$ traverses the history to $\aDoc$ in $\aNH'$} when:
+Define \emph{navigating from $\aDoc$ to $\aDoc'$ in $\aNH$} to be the result of:
+\begin{itemize}
+\item deleting the session future of $\aDoc$, and
+\item replacing $\aDoc$ by $\aDoc'$.
+\end{itemize}
+Define \emph{traversing the history to $\aDoc$ in $\aNH$} to be $\aNH'$ where:
 \begin{itemize}
 \item $\Docs'$ is $\Docs$,
-\item $\leChron'$ is $\leChron$,
-\item $\parentOf'$ is $\parentOf$,
-\item $\eqSess'$ is $\eqSess$, and
 \item $\bDoc\in\Active'$ whenever $\aDoc\not\eqSess\bDoc \in \Active$, or
-  $\aDoc=\bDoc$.
+  $\aDoc=\bDoc$,
+\item $\bDoc\leChron'\cDoc$ whenever $\bDoc\leChron\cDoc$,
+\item $\bDoc\parentOf'\cDoc$ whenever $\bDoc\parentOf\cDoc$, and
+\item $\bDoc\eqSess'\cDoc$ whenever $\bDoc\eqSess\cDoc$.
 \end{itemize}
 Define \emph{$\aNH$ traverses the history by $+\delta$ to $\aNH'$} when:
 \begin{itemize}
