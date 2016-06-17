@@ -371,6 +371,23 @@ Define:
   which is not the same as $H$.
 \end{counterexample}
 
+[ASAJ: Not sure about this\dots]
+
+\begin{patch}
+Define \emph{$\aNH$ traverses the history from $\aDoc'$} when there is some $\aDoc$ such that:
+\begin{itemize}
+\item $\aDoc\ltSess\aDoc'$,
+\item for any $\bDoc\ltSess\aDoc'$ we have $\bDoc\leChron\aDoc$, and
+\item $\aNH$ traverses the history to $\aDoc$.
+\end{itemize}
+Define \emph{$\aNH$ traverses the history by $-\delta$ to $\aNH'$} when:
+\begin{itemize}
+\item the joint session past and active documents of $\aNH$ is $\aDoc_1 \gtChron \cdots \gtChron \aDoc_\delta \gtChron \cdots$,
+\item there is some $\aNH=\aNH_0,\ldots,\aNH_\delta=\aNH'$, such that
+\item $H_{i-1}$ traverses the history from $d_i$ in $H_i$ for each $1 \le i \le \delta$.
+\end{itemize}
+\end{patch}
+
 \begin{goal}
   If $\aDoc$ in $\aNH$ navigates to $\aDoc'$ in $\aNH'$,
   and $\aNH'$ traverses the history by $-1$ to $\aNH''$,
