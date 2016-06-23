@@ -8,8 +8,7 @@
  <a href="https://servo.org">Servo</a>
 </p>
 <script>
- var currentPage = 5; // prefilled by server
- console.log('replaccced');
+ var currentPage = 5;
  history.replaceState(5, document.title, '?x=5');
  function go(d) {
    setupPage(currentPage + d);
