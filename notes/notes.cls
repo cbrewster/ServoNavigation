@@ -12,15 +12,22 @@
     \normalsize\@date\par
 }}
 
+\newcommand{\indicia}{\renewcommand{\@indicia}}
+\newcommand{\@indicia}{}
+
 \newcommand{\ps@first}{%
   \def\@evenfoot{\vbox{\footnotesize\sffamily\bigskip\@indicia}}%
   \let\@oddfoot\@evenfoot
   \let\@evenhead\relax
   \let\@oddhead\relax
 }
-
-\newcommand{\indicia}{\renewcommand{\@indicia}}
-\newcommand{\@indicia}{}
+\newcommand{\ps@notes}{%
+  \def\@evenhead{\sffamily\footnotesize\@title\hss\thepage}%
+  \let\@oddhead\@evenhead
+  \let\@evenfoot\relax
+  \let\@oddfoot\relax
+}
+\pagestyle{notes}
 
 \renewcommand{\@seccntformat}[1]{\csname the#1\endcsname. }
 
