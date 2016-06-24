@@ -1,6 +1,6 @@
 \documentclass{notes}
 
-\title{Notes on navigation history}
+\title{A model of navigation history}
 \author{Connor G. Brewster \and Alan Jeffrey}
 \date{DRAFT of 2016-06-24}
 \indicia{
@@ -58,9 +58,9 @@ Navigation has been a core component of the web since its inception:
 users and scripts can follow hyperlinks, or can go back or forwards
 through the session history. Despite its long existence, navigation
 history has no formal model or properties. In this paper, we present a
-formal model aligned with the WHATWG specification of navigation
+formal model aligned with the \textsc{whatwg} specification of navigation
 history, and investigate its properties. The fundamental property of
-navigation is \emph{homomorphism}: traversing the history by $\delta$
+navigation history is that traversing the history by $\delta$
 then by $\delta'$ should be the same as traversing by
 $\delta+\delta'$. In particular, traversing by $+1$ (forward) then by
 $-1$ (back) is the same as traversing by $0$ (doing nothing). We show
@@ -85,13 +85,195 @@ Web browsers.
 
 \section{Introduction}
 
-[These are rough notes, working towards a model of navigation history for the web.]
+Navigation has been a core component of the web since its inception:
+users and scripts can follow hyperlinks, or can go back or forwards
+through the session history. Users are exposed to this functionality
+through following hyperlinks, and by the forward and back buttons.
+Scripts have many ways of accessing session history, via the
+navigation API~\cite[\S7.7]{whatwg} and the \verb|element.click()| method.
+
+Despite its long existence, navigation history has no formal model or
+properties. The specification of the navigation API is informal, and
+has complex dependencies on the rest of the HTML
+specification~\cite{whatwg}. There is little discussion of the goals
+of the API, and an unclear alignment with browser implementations.
+
+In this paper, we present a formal model of navigation, aligned with
+the HTML specification, and investigate its properties. The
+starting point is that there is a total order of
+\emph{documents}\footnote{%
+  We are eliding some of the technical details of the specification here,
+  in particular we are conflatating a \emph{browsing context}
+  with the document it contains, and we are ignoring issues around
+  document loading and unloading.
+}, one of which is \emph{active}, for example:
+\[\begin{tikzpicture}
+  \node[doc](0) at (0,0){0};
+  \node[doc](1) at (1,0){1};
+  \node[doc,jshactive,fully](2) at (2,0){2};
+  \node[draw,dotted,fit=(0)(1)(2)] {};
+\end{tikzpicture}\]
+In diagrams, we use left-to-right order to indicate order,
+and highlight the active document. The user can \emph{traverse}
+the history which changes the active document, for example pressing
+the back button:
+\[\begin{tikzpicture}
+  \node[doc](0) at (0,0){0};
+  \node[doc,jshactive,fully](1) at (1,0){1};
+  \node[doc](2) at (2,0){2};
+  \node[draw,dotted,fit=(0)(1)(2)] {};
+\end{tikzpicture}\]
+The user can also \emph{navigate}, which replaces any document
+after the currently active document by a fresh document:
+\[\begin{tikzpicture}
+  \node[doc](0) at (0,0){0};
+  \node[doc](1) at (1,0){1};
+  \node[doc,jshactive,fully](4) at (4,0){4};
+  \node[draw,dotted,fit=(0)(1)(4)] {};
+\end{tikzpicture}\]
+Users can also traverse the history by more than one document
+at a time, for example by using a pull-down menu from the back
+or forwards button. This is called \emph{traversing by $\delta$},
+for instance we can traverse our running example by $-2$
+to get:
+\[\begin{tikzpicture}
+  \node[doc,jshactive,fully](0) at (0,0){0};
+  \node[doc](1) at (1,0){1};
+  \node[doc](4) at (4,0){4};
+  \node[draw,dotted,fit=(0)(1)(4)] {};
+\end{tikzpicture}\]
+We formalize the notions of traversal and navigation in
+\S\ref{sec:model}, and show that they satisfy two pleasant
+properties:
+\begin{itemize}
+
+\item \emph{traverse-then-traverse}:
+  traversing by $\delta$ then by $\delta'$
+  is the same as traversing by $\delta+\delta'$.
+  
+\item \emph{navigate-then-traverse}:
+  navigating then traversing by $-1$
+  has the original active document.
+  
+\end{itemize}
+Thus far, the model is refreshingly simple, and corresponds well to
+the specification and to browser implmentations. Where the problems
+arise is in the \emph{hierarchical} nature of documents. HTML
+documents can contain \verb|iframe| elements, which
+are independent documents in their own right, often
+used to embed third party content such as advertisements.
+We can treat each document as a tree, for example:
+\[\begin{tikzpicture}
+  \node[doc,jshactive,fully](0) at (0,0){0};
+  \node[doc,active,fully](1) at (1,-1){1};
+  \node[doc,active,fully](2) at (2,-2){2};
+  \node[doc,active,fully](3) at (3,0){3};
+  \node[draw,dotted,fit=(0)] {};
+  \node[draw,dotted,fit=(1)] {};
+  \node[draw,dotted,fit=(2)] {};
+  \node[draw,dotted,fit=(3)] {};
+  \draw[->](0)--(1);
+  \draw[->](1)--(2);
+  \draw[->](0)--(3);
+\end{tikzpicture}\]
+The problem comes from the ability of each document to
+navigate separately and maintain its own session history,
+but that traversal is a global operation that operates
+on the \emph{joint session history}. For example
+if document $2$ in the previous example navigates, the
+resulting state is:
+\[\begin{tikzpicture}
+  \node[doc,active,fully](0) at (0,0){0};
+  \node[doc,active,fully](1) at (1,-1){1};
+  \node[doc](2) at (2,-2){2};
+  \node[doc,active,fully](3) at (3,0){3};
+  \node[doc,jshactive,fully](4) at (4,-2){4};
+  \node[draw,dotted,fit=(0)] {};
+  \node[draw,dotted,fit=(1)] {};
+  \node[draw,dotted,fit=(2)(4)] {};
+  \node[draw,dotted,fit=(3)] {};
+  \draw[->](0)--(1);
+  \draw[->](1)--(4);
+  \draw[->](0)--(3);
+\end{tikzpicture}\]
+and then if document $1$ navigates, the state is:
+\[\begin{tikzpicture}
+  \node[doc,active,fully](0) at (0,0){0};
+  \node[doc](1) at (1,-1){1};
+  \node[doc](2) at (2,-2){2};
+  \node[doc,active,fully](3) at (3,0){3};
+  \node[doc,active](4) at (4,-2){4};
+  \node[doc,jshactive,fully](5) at (5,-1){5};
+  \node[draw,dotted,fit=(0)] {};
+  \node[draw,dotted,fit=(1)(5)] {};
+  \node[draw,dotted,fit=(2)(4)] {};
+  \node[draw,dotted,fit=(3)] {};
+  \draw[->](0)--(5);
+  \draw[->](1)--(4);
+  \draw[->](0)--(3);
+\end{tikzpicture}\]
+Note that node $4$ here is in an unusual state: it is active, but has
+an inactive ancestor. The specification~\cite[\S7.7]{whatwg}
+distinguishes between \emph{active} documents such as $4$, and
+\emph{fully active} documents such as $0$, $3$ and $5$. Active
+documents can become fully active by traversals involving their
+ancestors. For example, after traversing by $-1$, document $4$ is
+fully active:
+\[\begin{tikzpicture}
+  \node[doc,active,fully](0) at (0,0){0};
+  \node[doc,jshactive,fully](1) at (1,-1){1};
+  \node[doc](2) at (2,-2){2};
+  \node[doc,active,fully](3) at (3,0){3};
+  \node[doc,active,fully](4) at (4,-2){4};
+  \node[doc](5) at (5,-1){5};
+  \node[draw,dotted,fit=(0)] {};
+  \node[draw,dotted,fit=(1)(5)] {};
+  \node[draw,dotted,fit=(2)(4)] {};
+  \node[draw,dotted,fit=(3)] {};
+  \draw[->](0)--(1);
+  \draw[->](1)--(4);
+  \draw[->](0)--(3);
+\end{tikzpicture}\]
+As even a simple example like this shows, the combination of features
+quickly results in a complex mix of session history, ordering, and
+document hierarchy, which leads to the problems:
+\begin{itemize}
+
+\item \emph{Formally} there is no simple model,
+  and the model provided by the specification does
+  not satisfy the traverse-then-traverse property.
+
+\item \emph{Experimentally} the browsers disagree
+  with each other, and with the HTML specification,
+  about the semantics of navigation.
+
+\end{itemize}
+In this paper, we address these:
+\begin{itemize}
+
+\item \S\ref{sec:model} provides a formal model of navigation history,
+  which is intended to align with the specification. We show, through
+  a series of examples, that it does not satisfy the
+  traverse-then-traverse property, and give patches to the model for
+  each example. The final model does satisfy the
+  traverse-then-traverse property.
+
+\item \S\ref{sec:experiments} investigates how well the patched
+  model aligns with existing browser implementations. We show
+  ways in which the browsers exhibit behaviours which are not
+  aligned with the specification, and discuss how our proposed
+  model matches these behaviours.
+
+\end{itemize}
+Finally, we propose changed wording to the specification, which
+would bring it in line with our patched model.
 
 \section{Preliminaries}
 
 [Define forest, tree, root, total order, equivalence.]
 
 \section{Model}
+\label{sec:model}
 
 A \emph{navigation history} $\aNH=(\Docs,\Active,{\parentOf},{\leChron},{\eqSess})$ consists of:
 \begin{itemize}
@@ -460,6 +642,7 @@ Define \emph{$\aNH$ traverses the history by $-\delta$ to $\aNH'$} when:
 %% \end{counterexample}
 
 \section{Experiments}
+\label{sec:experiments}
 
 [In this section various different navigation and traversal scenarios are tested in popular web browsers to see where they differ in behaviour from both the spec and each other.]
 
@@ -1107,5 +1290,8 @@ Define \emph{$\aNH$ traverses the history by $-\delta$ to $\aNH'$} when:
 \section{Conclusion}
 
 [We did stuff.]
+
+\bibliographystyle{plain}
+\bibliography{notes}
 
 \end{document}
