@@ -49,15 +49,15 @@
 \renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
   {-3.25ex\@plus -1ex \@minus -.2ex}%
   {1.5ex \@plus .2ex}%
-  {\sffamily\Large\bfseries\raggedright}}
+  {\sffamily\large\bfseries\raggedright}}
 \renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%
   {-3.25ex\@plus -1ex \@minus -.2ex}%
   {1.5ex \@plus .2ex}%
-  {\sffamily\Large\bfseries\raggedright}}
+  {\sffamily\large\bfseries\raggedright}}
 \renewcommand\paragraph{\@startsection{paragraph}{4}{\z@}%
   {-3.25ex \@plus-1ex \@minus-.2ex}%
   {1.5ex \@plus .2ex}%
-  {\sffamily\large\bfseries\raggedright}}
+  {\sffamily\normalsize\bfseries\raggedright}}
 \renewcommand\subparagraph{\@startsection{subparagraph}{5}{\z@}%
   {3.25ex \@plus1ex \@minus .2ex}%
   {-0.5em}%
