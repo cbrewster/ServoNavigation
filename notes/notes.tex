@@ -2,7 +2,7 @@
 
 \title{Notes on navigation history}
 \author{Connor G. Brewster \and Alan Jeffrey}
-\date{DRAFT of 2016-06-23}
+\date{DRAFT of 2016-06-24}
 \indicia{
   \includegraphics[height=4.5ex]{images/by}
   \begin{tabular}[b]{@{}l}%
@@ -54,7 +54,24 @@
 \maketitle
 
 \subparagraph{Abstact:}
-Some notes on a model of navigation history.
+Navigation has been a core component of the web since its inception:
+users and scripts can follow hyperlinks, or can go back or forwards
+through the session history. Despite its long existence, navigation
+history has no formal model or properties. In this paper, we present a
+formal model aligned with the WHATWG specification of navigation
+history, and investigate its properties. The fundamental property of
+navigation is \emph{homomorphism}: traversing the history by $\delta$
+then by $\delta'$ should be the same as traversing by
+$\delta+\delta'$. In particular, traversing by $+1$ (forward) then by
+$-1$ (back) is the same as traversing by $0$ (doing nothing). We show
+that the specification-aligned model does not satisfy this property,
+by exhibiting a series of counter-examples, which motivate three
+patches to the model. The patched model is homomorphic. We present a
+series of experiments, showing that browsers are inconsistent in their
+implementation of navigation history, but that their behaviour is
+closer to the patched model than to the specification-aligned
+model. We propose patches to the specification to align it with the
+homomorphic model.
 
 \subparagraph{ACM Classification:}
 D.2.1 Requirements/Specifications.
