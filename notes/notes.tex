@@ -19,13 +19,16 @@
 \usetikzlibrary{fit}
 
 % Macros, so we can change notation easily
+\newcommand{\Verts}{V}
+\newcommand{\aVert}{v}
+\newcommand{\bVert}{w}
 \newcommand{\aNH}{H}
 \newcommand{\Docs}{D}
 \newcommand{\Active}{A}
 \newcommand{\FullyActive}{F\!A}
 \newcommand{\parentOf}{\rightarrow}
 \newcommand{\parentOfActive}{\twoheadrightarrow}
-\newcommand{\childOf}{\larrow}
+\newcommand{\childOf}{\leftarrow}
 \newcommand{\activeChildOf}{\twoheadleftarrow}
 \newcommand{\leChron}{\le}
 \newcommand{\ltChron}{<}
@@ -268,12 +271,32 @@ In this paper, we address these:
 Finally, we propose changed wording to the specification, which
 would bring it in line with our patched model.
 
-\section{Preliminaries}
-
-[Define forest, tree, root, total order, equivalence.]
-
 \section{Model}
 \label{sec:model}
+
+\subsection{Preliminaries}
+
+A \emph{directed graph} $G=(V,{\parentOf})$ consists of:
+\begin{itemize}
+\item a set $\Verts$ (the \emph{vertices}), and
+\item a relation ${\parentOf} \subseteq (\Verts\times\Verts)$
+\end{itemize}
+The \emph{transitive closure} of $\parentOf$ is defined as $\aVert\parentOf^+\aVert'$ whenever
+there exists $\aVert_0,\ldots,\aVert_n$ such that:
+\[
+  \aVert=\aVert_0\parentOf\cdots\parentOf\aVert_n=\aVert'
+\]
+A \emph{forest} is a directed graph where:
+\begin{itemize}
+\item there is no $\aVert$ such that $\aVert\parentOf^+\aVert$ (\emph{acyclicity})
+\item if $\aVert\parentOf\aVert'\childOf\aVert''$ then $\aVert=\aVert''$ (\emph{at most one parent}).
+\end{itemize}
+A \emph{root vertex} of a forest is a vertex $\aVert$ such that there is no $\bVert\parentOf\aVert$.
+A \emph{tree} is a forest with a unique root vertex.
+
+[Add definitions of total order and equivalencde.]
+
+\subsection{Definitions}
 
 A \emph{navigation history} $\aNH=(\Docs,\Active,{\parentOf},{\leChron},{\eqSess})$ consists of:
 \begin{itemize}
@@ -355,8 +378,7 @@ Define \emph{$\aNH$ traverses the history by $0$ to $\aNH'$} when $\aNH=\aNH'$.
 
 [This defn is meant to align with the spec.]
 
-\section{Properties}
-
+\subsection{Properties}
 
 [State some goals, e.g. go($\delta$);go($\delta'$) is the same as go($\delta+\delta'$),
   navigate;go($-1$) has the same fully active documents as doing nothing,
