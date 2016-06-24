@@ -3,6 +3,7 @@
 \LoadClass{article}
 
 \renewcommand{\@begintheorem}[2]{\trivlist \item[\hskip\labelsep {\sffamily\bfseries #1\ #2:}]}
+\renewcommand{\@opargbegintheorem}[3]{\trivlist \item[\hskip\labelsep {\sffamily\bfseries #1\ #2 (#3):}]}
 
 \renewcommand{\maketitle}{{%
     \thispagestyle{first}\raggedright

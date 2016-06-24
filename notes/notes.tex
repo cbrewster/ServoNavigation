@@ -42,6 +42,7 @@
 \newcommand{\bDoc}{e}
 \newcommand{\cDoc}{f}
 \newcommand{\st}{\mathbin.}
+\newtheorem{definition}{Definition}
 \newtheorem{goal}{Goal}
 \newtheorem{patch}{Patch}
 \newtheorem{counterexample}{Counterexample}
@@ -274,9 +275,18 @@ would bring it in line with our patched model.
 \section{Model}
 \label{sec:model}
 
-\subsection{Preliminaries}
+In this section, we present our formal model of navigation history.
+\S\ref{sec:preliminaries} contains definitions of concepts such as
+tree and total order, and may be skipped by most readers. The model,
+together with some examples, is given in \S\ref{sec:defns}. In
+\S\ref{sec:properties} we define the fundamental property of
+navigtion history, show that the model does \emph{not} satisfy
+it, but can be patched to do so.
 
-A \emph{directed graph} $G=(V,{\parentOf})$ consists of:
+\subsection{Preliminaries}
+\label{sec:preliminaries}
+
+A \emph{directed graph} $G=(\Verts,{\parentOf})$ consists of:
 \begin{itemize}
 \item a set $\Verts$ (the \emph{vertices}), and
 \item a relation ${\parentOf} \subseteq (\Verts\times\Verts)$
@@ -286,6 +296,8 @@ there exists $\aVert_0,\ldots,\aVert_n$ such that:
 \[
   \aVert=\aVert_0\parentOf\cdots\parentOf\aVert_n=\aVert'
 \]
+The \emph{reflexive transitive closure} of $\parentOf$ is defined as $\aVert\parentOf^*\aVert'$ whenever
+$\aVert\parentOf^+\aVert'$ or $\aVert=\aVert'$.
 A \emph{forest} is a directed graph where:
 \begin{itemize}
 \item there is no $\aVert$ such that $\aVert\parentOf^+\aVert$ (\emph{acyclicity})
@@ -293,11 +305,24 @@ A \emph{forest} is a directed graph where:
 \end{itemize}
 A \emph{root vertex} of a forest is a vertex $\aVert$ such that there is no $\bVert\parentOf\aVert$.
 A \emph{tree} is a forest with a unique root vertex.
-
-[Add definitions of total order and equivalencde.]
+A \emph{partial order} is a directed graph $(\Verts, {\le})$ such that:
+\begin{itemize}
+\item every $\aVert$ has $\aVert\le\aVert$ (\emph{reflexivity}), and
+\item if $\aVert\le\aVert'\le\aVert''$ then $\aVert\le\aVert''$ (\emph{transitivity}).
+\end{itemize}
+A \emph{total order} is a partial order such that:
+\begin{itemize}
+\item for every $\aVert$ and $\aVert'$, either $\aVert\le\aVert'$ or $\aVert\ge\aVert'$ (\emph{totality}).
+\end{itemize}
+A \emph{equivalence} is a partial order $(\Verts,{\sim})$ such that:
+\begin{itemize}
+\item if $\aVert\sim\aVert'$ then $\aVert'\sim\aVert$ (\emph{symmetry}).
+\end{itemize}
 
 \subsection{Definitions}
+\label{sec:defns}
 
+\begin{definition}[Navigation history]
 A \emph{navigation history} $\aNH=(\Docs,\Active,{\parentOf},{\leChron},{\eqSess})$ consists of:
 \begin{itemize}
 \item a set $\Docs$ (the \emph{documents}),
@@ -313,6 +338,7 @@ such that:
   we have $\aDoc \parentOf \bDoc'$, and
 \item for every $\aDoc \parentOf \bDoc$, we have $\aDoc \leChron \bDoc$.
 \end{itemize}
+\end{definition}
 Define:
 \begin{itemize}
 \item $\rootDoc$ is the unique active root document,
@@ -325,6 +351,8 @@ Define:
 \item the \emph{joint session future} is $\{ \bDoc \mid \exists \aDoc \in \FullyActive \st \aDoc \ltSess \bDoc \}$,
 \item the \emph{joint session past} is $\{ \bDoc \mid \exists \aDoc \in \FullyActive \st \aDoc \gtSess \bDoc \}$,
 \end{itemize}
+
+\begin{definition}[Navigation]
 Define \emph{deleting $\aDoc$ from $\aNH$}, when $\aDoc\not\in\FullyActive$, to be $\aNH'$ where:
 \begin{itemize}
 \item $\Docs' = \aDoc \setminus \{ \bDoc \mid \aDoc\parentOf^* \bDoc \}$,
@@ -355,6 +383,9 @@ Define \emph{navigating from $\aDoc$ to $\aDoc'$ in $\aNH$} to be the result of:
 \item deleting the session future of $\aDoc$, and
 \item replacing $\aDoc$ by $\aDoc'$.
 \end{itemize}
+\end{definition}
+
+\begin{definition}[Traversal]
 Define \emph{traversing the history to $\aDoc$ in $\aNH$} to be $\aNH'$ where:
 \begin{itemize}
 \item $\Docs'$ is $\Docs$,
@@ -375,10 +406,10 @@ Define \emph{$\aNH$ traverses the history by $-\delta$ to $\aNH'$} when:
 \item $H$ traverses the history to $d_\delta$ in $H'$
 \end{itemize}
 Define \emph{$\aNH$ traverses the history by $0$ to $\aNH'$} when $\aNH=\aNH'$.
-
-[This defn is meant to align with the spec.]
+\end{definition}
 
 \subsection{Properties}
+\label{sec:properties}
 
 [State some goals, e.g. go($\delta$);go($\delta'$) is the same as go($\delta+\delta'$),
   navigate;go($-1$) has the same fully active documents as doing nothing,
