@@ -154,11 +154,11 @@ properties:
 \item \emph{traverse-then-traverse}:
   traversing by $\delta$ then by $\delta'$
   is the same as traversing by $\delta+\delta'$.
-  
+
 \item \emph{navigate-then-traverse}:
   navigating then traversing by $-1$
   has the original active document.
-  
+
 \end{itemize}
 Thus far, the model is refreshingly simple, and corresponds well to
 the specification and to browser implmentations. Where the problems
@@ -1231,7 +1231,7 @@ Define \emph{$\aNH$ traverses the history by $-\delta$ to $\aNH'$} when:
         \node[draw,dotted,fit=(0)]{};
         \node[draw,dotted,fit=(1)(4)]{};
         \node[draw,dotted,fit=(2)]{};
-        \draw[->](0)--(4);
+        \draw[->](0)to[out=0,in=140](4);
         \draw[->](0)to[out=-20,in=90](2);
       \end{tikzpicture}
     }
@@ -1253,11 +1253,11 @@ Define \emph{$\aNH$ traverses the history by $-\delta$ to $\aNH'$} when:
         \node[draw,dotted,fit=(0)]{};
         \node[draw,dotted,fit=(1)(4)]{};
         \node[draw,dotted,fit=(2)(5)]{};
-        \draw[->](0)--(4);
+        \draw[->](0)to[out=0,in=140](4);
         \draw[->](0)to[out=0,in=90](5);
       \end{tikzpicture}
     }
-    \caption{Advance $document 2$ to $6$}
+    \caption{Advance document $2$ to $6$}
   \end{figure}
 
   Advance $document 2$ to $7$:
@@ -1276,8 +1276,8 @@ Define \emph{$\aNH$ traverses the history by $-\delta$ to $\aNH'$} when:
         \node[draw,dotted,fit=(0)]{};
         \node[draw,dotted,fit=(1)(4)]{};
         \node[draw,dotted,fit=(2)(6)]{};
-        \draw[->](0)--(4);
-        \draw[->](0)to[out=0,in=90](6);
+        \draw[->](0)to[out=0,in=140](4);
+        \draw[->](0)to[out=0,in=120](6);
       \end{tikzpicture}
     }
     \caption{Advance document 2 to $7$}
@@ -1322,7 +1322,7 @@ Define \emph{$\aNH$ traverses the history by $-\delta$ to $\aNH'$} when:
         \node[draw,dotted,fit=(0)]{};
         \node[draw,dotted,fit=(1)(4)]{};
         \node[draw,dotted,fit=(2)(6)]{};
-        \draw[->](0)--(4);
+        \draw[->](0)to[out=0,in=140](4);
         \draw[->](0)to[out=-20,in=90](2);
       \end{tikzpicture}
     }
