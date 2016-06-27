@@ -2,7 +2,7 @@
 
 \title{A model of navigation history}
 \author{Connor G. Brewster \and Alan Jeffrey}
-\date{DRAFT of 2016-06-26}
+\date{DRAFT of 2016-06-27}
 \indicia{
   \includegraphics[height=4.5ex]{images/by}
   \begin{tabular}[b]{@{}l}%
@@ -47,6 +47,7 @@
 \newtheorem{patch}{Patch}
 \newtheorem{counterexample}{Counterexample}
 \newtheorem{experiment}{Experiment}
+\newcommand{\QED}{\hfill$\Box$}
 
 \tikzstyle{doc} = [draw=black, fill=blue!10, circle, font={\normalfont\sffamily}]
 \tikzstyle{fully} = [draw=red, thick]
@@ -60,7 +61,7 @@
 \subparagraph{Abstact:}
 Navigation has been a core component of the web since its inception:
 users and scripts can follow hyperlinks, or can go back or forwards
-through the session history. Despite its long existence, navigation
+through the navigation history. Despite its long existence, navigation
 history has no formal model or properties. In this paper, we present a
 formal model aligned with the \textsc{whatwg} specification of navigation
 history, and investigate its properties. The fundamental property of
@@ -70,12 +71,12 @@ $\delta+\delta'$. In particular, traversing by $+1$ (forward) then by
 $-1$ (back) is the same as traversing by $0$ (doing nothing). We show
 that the specification-aligned model does not satisfy this property,
 by exhibiting a series of counter-examples, which motivate three
-patches to the model. The patched model is homomorphic. We present a
+patches to the model. We present a
 series of experiments, showing that browsers are inconsistent in their
 implementation of navigation history, but that their behaviour is
 closer to the patched model than to the specification-aligned
 model. We propose patches to the specification to align it with the
-homomorphic model.
+patched model.
 
 \subparagraph{ACM Classification:}
 D.2.1 Requirements/Specifications.
@@ -91,7 +92,7 @@ Web browsers.
 
 Navigation has been a core component of the web since its inception:
 users and scripts can follow hyperlinks, or can go back or forwards
-through the session history. Users are exposed to this functionality
+through the navigation history. Users are exposed to this functionality
 through following hyperlinks, and by the forward and back buttons.
 Scripts have many ways of accessing session history, via the
 navigation API~\cite[\S7.7]{whatwg} and the \verb|element.click()| method.
@@ -109,7 +110,8 @@ starting point is that there is a total order of
   We are eliding some of the technical details of the specification here,
   in particular we are conflatating a \emph{browsing context}
   with the document it contains, and we are ignoring issues around
-  document loading and unloading.
+  document loading and unloading, and around the current entry of the joint
+  session history.
 }, one of which is \emph{active}, for example:
 \[\begin{tikzpicture}
   \node[doc](0) at (0,0){0};
@@ -128,7 +130,7 @@ the back button:
   \node[draw,dotted,fit=(0)(1)(2)] {};
 \end{tikzpicture}\]
 The user can also \emph{navigate}, which replaces any document
-after the currently active document by a fresh document:
+after the currently active document by a fresh active document:
 \[\begin{tikzpicture}
   \node[doc](0) at (0,0){0};
   \node[doc](1) at (1,0){1};
@@ -289,7 +291,7 @@ it, but can be patched to do so.
 A \emph{directed graph} $G=(\Verts,{\parentOf})$ consists of:
 \begin{itemize}
 \item a set $\Verts$ (the \emph{vertices}), and
-\item a relation ${\parentOf} \subseteq (\Verts\times\Verts)$
+\item a relation ${\parentOf} \subseteq (\Verts\times\Verts)$ (the \emph{edges}).
 \end{itemize}
 The \emph{transitive closure} of $\parentOf$ is defined as $\aVert\parentOf^+\aVert'$ whenever
 there exists $\aVert_0,\ldots,\aVert_n$ such that:
@@ -305,16 +307,21 @@ A \emph{forest} is a directed graph where:
 \end{itemize}
 A \emph{root vertex} of a forest is a vertex $\aVert$ such that there is no $\bVert\parentOf\aVert$.
 A \emph{tree} is a forest with a unique root vertex.
-A \emph{partial order} is a directed graph $(\Verts, {\le})$ such that:
+A \emph{preorder} is a directed graph $(\Verts, {\le})$ such that:
 \begin{itemize}
 \item every $\aVert$ has $\aVert\le\aVert$ (\emph{reflexivity}), and
 \item if $\aVert\le\aVert'\le\aVert''$ then $\aVert\le\aVert''$ (\emph{transitivity}).
+\end{itemize}
+A \emph{partial order} is a preorder such that:
+\begin{itemize}
+\item for every $\aVert$ and $\aVert'$, if $\aVert\le\aVert'$ and $\aVert'\le\aVert$ then $\aVert=\aVert'$
+  (\emph{antisymmetry}).
 \end{itemize}
 A \emph{total order} is a partial order such that:
 \begin{itemize}
 \item for every $\aVert$ and $\aVert'$, either $\aVert\le\aVert'$ or $\aVert\ge\aVert'$ (\emph{totality}).
 \end{itemize}
-A \emph{equivalence} is a partial order $(\Verts,{\sim})$ such that:
+A \emph{equivalence} is a preorder $(\Verts,{\sim})$ such that:
 \begin{itemize}
 \item if $\aVert\sim\aVert'$ then $\aVert'\sim\aVert$ (\emph{symmetry}).
 \end{itemize}
@@ -322,14 +329,20 @@ A \emph{equivalence} is a partial order $(\Verts,{\sim})$ such that:
 \subsection{Definitions}
 \label{sec:defns}
 
+We can now formalize our model of navigation history, together with
+the operations of navigation and traversal. This formalizes the
+navigation history specification~\cite{whatwg}, and has a pleasant
+diagramatic presentation, but as we shall see in
+\S\ref{sec:properties}, it has unexpected properties.
+
 \begin{definition}[Navigation history]
 A \emph{navigation history} $\aNH=(\Docs,\Active,{\parentOf},{\leChron},{\eqSess})$ consists of:
 \begin{itemize}
-\item a set $\Docs$ (the \emph{documents}),
+\item a finite set $\Docs$ (the \emph{documents}),
 \item a subset $\Active \subseteq \Docs$ (the \emph{active} documents),
-\item a forest $(\Docs,{\parentOf})$ (the \emph{document hierarchy}),
-\item a total order $(\Docs,{\leChron})$ (the \emph{chronological order}), and
-\item an equivalence relation $(\Docs,{\eqSess})$ (the \emph{same-session equivalence}).
+\item a forest $(\Docs,{\parentOf})$ (the \emph{child} relationship),
+\item a total order $(\Docs,{\leChron})$ (the \emph{chronological} order), and
+\item an equivalence relation $(\Docs,{\eqSess})$ (the \emph{same-session} equivalence).
 \end{itemize}
 such that:
 \begin{itemize}
@@ -337,12 +350,42 @@ such that:
 \item for every $\aDoc \parentOf \bDoc \eqSess \bDoc'$
   we have $\aDoc \parentOf \bDoc'$, and
 \item for every $\aDoc \parentOf \bDoc$, we have $\aDoc \leChron \bDoc$.
+  \QED
 \end{itemize}
 \end{definition}
-Define:
+We present such navigation histories diagramatically, using
+left-to-right position for chronological order, and grouping documents
+in the same session. Since documents in the same session must have the
+same parent, we only draw the document hierarchy for active children.
+For example the diagram:
+\[\begin{tikzpicture}
+  \node[doc,active,fully](0) at (0,0){0};
+  \node[doc,jshactive,fully](1) at (1,-1){1};
+  \node[doc](2) at (2,-2){2};
+  \node[doc,active,fully](3) at (3,0){3};
+  \node[doc,active,fully](4) at (4,-2){4};
+  \node[doc](5) at (5,-1){5};
+  \node[draw,dotted,fit=(0)] {};
+  \node[draw,dotted,fit=(1)(5)] {};
+  \node[draw,dotted,fit=(2)(4)] {};
+  \node[draw,dotted,fit=(3)] {};
+  \draw[->](0)--(1);
+  \draw[->](1)--(4);
+  \draw[->](0)--(3);
+\end{tikzpicture}\]
+represents:
+\[\begin{array}{l}
+  D = \{ 0,1,2,3,4,5 \} \\[\jot]
+  A = \{ 0,1,3,4 \} \\[\jot]
+  0 \parentOf 1 \quad 0 \parentOf 3 \quad 0 \parentOf 5 \quad 1 \parentOf 2 \quad 1 \parentOf 4 \\[\jot]
+  0 \leChron 1 \leChron 2 \leChron 3 \leChron 4 \leChron 5 \\[\jot]
+  1 \eqSess 5 \quad 2 \eqSess 4
+\end{array}\]
+In such a navigation history, we define:
 \begin{itemize}
 \item $\rootDoc$ is the unique active root document,
-\item $\aDoc \parentOfActive \bDoc$ when $\aDoc \parentOf \bDoc$ and $\bDoc \in \Active$,
+\item $\aDoc \parentOfActive \bDoc$ when $\aDoc \parentOf \bDoc$ and $\bDoc \in \Active$
+  (the \emph{active child} relationship),
 \item $\FullyActive = \{ \aDoc \mid \rootDoc \parentOfActive^* \aDoc \}$
   (the \emph{fully active} documents),
 \item $\aDoc \ltSess \bDoc$ whenever $\aDoc \eqSess \bDoc$ and $\aDoc \ltChron \bDoc$,
@@ -351,6 +394,18 @@ Define:
 \item the \emph{joint session future} is $\{ \bDoc \mid \exists \aDoc \in \FullyActive \st \aDoc \ltSess \bDoc \}$,
 \item the \emph{joint session past} is $\{ \bDoc \mid \exists \aDoc \in \FullyActive \st \aDoc \gtSess \bDoc \}$,
 \end{itemize}
+These definitions are intended to align with the specification, for example
+\cite[7.7.2]{whatwg} has the definition:
+\begin{quote}
+  The \textbf{joint session history} of a top-level browsing context is the
+  union of all the session histories of all browsing contexts of all
+  the fully active \verb|Document| objects that share that top-level browsing
+  context, with all the entries that are current entries in their
+  respective session histories removed except for the current entry of
+  the joint session history.
+\end{quote}
+which (eliding the concept of ``current entry of the joint session history'')
+corresponds to the above definitions of joint session future and past.
 
 \begin{definition}[Navigation]
 Define \emph{deleting $\aDoc$ from $\aNH$}, when $\aDoc\not\in\FullyActive$, to be $\aNH'$ where:
