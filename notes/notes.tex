@@ -43,6 +43,7 @@
 \newcommand{\cDoc}{f}
 \newcommand{\st}{\mathbin.}
 \newtheorem{definition}{Definition}
+\newtheorem{conjecture}{Conjecture}
 \newtheorem{goal}{Goal}
 \newtheorem{patch}{Patch}
 \newtheorem{counterexample}{Counterexample}
@@ -595,12 +596,19 @@ specification, for example \cite[7.7.2]{whatwg} includes:
 \subsection{Properties}
 \label{sec:properties}
 
-\begin{goal}
+We now consider the fundamental property of navigation history:
+
+\begin{goal}[Traverse-then-traverse]
 \label{goal:homomorphism}
   If $H$ traverses the history by $\delta$ to $H'$
   and $H'$ traverses the history by $\delta'$ to $H''$
   then $H$ traverses the history by $\delta+\delta'$ to $H''$.
+  \QED
 \end{goal}
+Unfortunately, navigation as specified does not satisfy this property,
+due to the interplay of session history with the tree structure of documents.
+In this section, we give a series of counterexamples, and propose patches to
+the model to address each counterexample.
 
 \begin{counterexample}
   \label{counterexample:homomorphism1}
@@ -643,7 +651,7 @@ specification, for example \cite[7.7.2]{whatwg} includes:
     \draw[->](0)--(2);
     \draw[->](0)to[out=0,in=150](4);
   \end{tikzpicture}\]
-  but $H$ traverses the history $2$ to:
+  but $H$ traverses the history by $2$ to:
   \[\begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
     \node[doc,active,fully](1) at (1,-1){1};
@@ -656,13 +664,14 @@ specification, for example \cite[7.7.2]{whatwg} includes:
     \draw[->](0)--(1);
     \draw[->](0)to[out=0,in=150](4);
   \end{tikzpicture}\]
+  \QED
 \end{counterexample}
 %
 This counterexample is caused by the definition of `traverses the history by $\delta$' which
 only traverses one document's session history. Instead, we should traverse
 the history of all $\delta$ documents.
 
-\begin{patch}
+\begin{patch}[Traverse intermediaries]
 Define \emph{$\aNH$ traverses the history by $+\delta$ to $\aNH'$} when:
 \begin{itemize}
 \item the joint session future of $\aNH$ is $\aDoc_1 \ltChron \cdots \ltChron \aDoc_\delta \ltChron \cdots$,
@@ -674,6 +683,7 @@ Define \emph{$\aNH$ traverses the history by $-\delta$ to $\aNH'$} when:
 \item the joint session past of $\aNH$ is $\aDoc_1 \gtChron \cdots \gtChron \aDoc_\delta \gtChron \cdots$,
 \item there is some $\aNH=\aNH_0,\ldots,\aNH_\delta=\aNH'$, such that
 \item $H_{i-1}$ traverses the history to $d_i$ in $H_i$ for each $1 \le i \le \delta$.
+  \QED
 \end{itemize}
 \end{patch}
 Unfortunately, Goal~\ref{goal:homomorphism} is not satisfied,
@@ -693,7 +703,7 @@ even with this patch.
     \draw[->](0)--(1);
     \draw[->](2)--(3);
   \end{tikzpicture}\]
-  which moves forwards by $1$ to:
+  which traverses the history by $1$ to:
   \[\begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
     \node[doc](1) at (1,-1){1};
@@ -707,7 +717,7 @@ even with this patch.
     \draw[->](0)--(2);
     \draw[->](2)--(3);
   \end{tikzpicture}\]
-  which in turn moves forwards by $1$ to:
+  which in turn traverses the history by $1$ to:
   \[\begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
     \node[doc](1) at (1,-1){1};
@@ -721,7 +731,7 @@ even with this patch.
     \draw[->](0)--(2);
     \draw[->](2)--(4);
   \end{tikzpicture}\]
-  but $H$ goes forward by $2$ to:
+  but $H$ traverses the history by $2$ to:
   \[\begin{tikzpicture}
     \node[doc](0) at (0,0){0};
     \node[doc](1) at (1,-1){1};
@@ -735,34 +745,23 @@ even with this patch.
     \draw[->](0)--(2);
     \draw[->](2)--(3);
   \end{tikzpicture}\]
+  \QED
 \end{counterexample}
 The problem this time is that the definition of `joint session history' only includes
 the fully active documents, not all active documents.
 
-\begin{patch}
+\begin{patch}[Active joint session history]
 Define:
 \begin{itemize}
 \item the \emph{joint session future} is $\{ \bDoc \mid \exists \aDoc \in \Active \st \aDoc \ltSess \bDoc \}$, and
 \item the \emph{joint session past} is $\{ \bDoc \mid \exists \aDoc \in \Active \st \aDoc \gtSess \bDoc \}$.
+  \QED
 \end{itemize}
 \end{patch}
 
 
 \begin{counterexample}
   Let $H$ be:
-  %% \[\begin{tikzpicture}
-  %%   \node[doc,active,fully](0) at (0,0){0};
-  %%   \node[doc](1) at (1,-1){1};
-  %%   \node[doc](2) at (2,-2){2};
-  %%   \node[doc,active,fully](3) at (3,-2){3};
-  %%   \node[doc,jshactive,fully](4) at (4,-1){4};
-  %%   \node[draw,dotted,fit=(0)]{};
-  %%   \node[draw,dotted,fit=(1)(4)]{};
-  %%   \node[draw,dotted,fit=(2)(3)]{};
-  %%   \draw[->](0)--(4);
-  %%   \draw[->](0)to[out=-20,in=120](3);
-  %% \end{tikzpicture}\]
-  %% which traverses the history by $-1$ to:
   \[\begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
     \node[doc](1) at (1,-1){1};
@@ -801,25 +800,15 @@ Define:
     \draw[->](0)--(1);
     \draw[->](0)to[out=-20,in=120](3);
   \end{tikzpicture}\]
-  %% which traverses the history by $1$ to:
-  %% \[\begin{tikzpicture}
-  %%   \node[doc,active,fully](0) at (0,0){0};
-  %%   \node[doc](1) at (1,-1){1};
-  %%   \node[doc](2) at (2,-2){2};
-  %%   \node[doc,active,fully](3) at (3,-2){3};
-  %%   \node[doc,jshactive,fully](4) at (4,-1){4};
-  %%   \node[draw,dotted,fit=(0)]{};
-  %%   \node[draw,dotted,fit=(1)(4)]{};
-  %%   \node[draw,dotted,fit=(2)(3)]{};
-  %%   \draw[->](0)--(4);
-  %%   \draw[->](0)to[out=-20,in=120](3);
-  %% \end{tikzpicture}\]
   which is not the same as $H$.
+  \QED
 \end{counterexample}
+This final counterexample is caused by an asymmetry in the definition
+of traversal: it is defined in terms of navigating \emph{to} a document
+$d$, and not navigating \emph{from} a document. We fix this
+by making the definition symmetric:
 
-[ASAJ: Not sure about this\dots]
-
-\begin{patch}
+\begin{patch}[Symmetric traversal]
 Define \emph{$\aNH$ traverses the history from $\aDoc'$} when there is some $\aDoc$ such that:
 \begin{itemize}
 \item $\aDoc\ltSess\aDoc'$,
@@ -831,14 +820,56 @@ Define \emph{$\aNH$ traverses the history by $-\delta$ to $\aNH'$} when:
 \item the joint session past and active documents of $\aNH$ is $\aDoc_1 \gtChron \cdots \gtChron \aDoc_\delta \gtChron \cdots$,
 \item there is some $\aNH=\aNH_0,\ldots,\aNH_\delta=\aNH'$, such that
 \item $H_{i-1}$ traverses the history from $d_i$ in $H_i$ for each $1 \le i \le \delta$.
+  \QED
 \end{itemize}
 \end{patch}
+For example, to traverse the history by $-1$ from:
+\[\begin{tikzpicture}
+\node[doc,active,fully](0) at (0,0){0};
+\node[doc](1) at (1,-1){1};
+\node[doc,jshactive,fully](2) at (2,-2){2};
+\node[doc](3) at (3,-2){3};
+\node[doc,active,fully](4) at (4,-1){4};
+\node[draw,dotted,fit=(0)]{};
+\node[draw,dotted,fit=(1)(4)]{};
+\node[draw,dotted,fit=(2)(3)]{};
+\draw[->](0)--(4);
+\draw[->](0)to[out=-20,in=90](2);
+\end{tikzpicture}\]
+we find the joint session past and active documents (which is $4 \gtChron 2 \gtChron 1 \gtChron 0$)
+and traverse the history from the first item (which is $4$)
+which is the same as traversing the history to $1$:
+\[\begin{tikzpicture}
+\node[doc,active,fully](0) at (0,0){0};
+\node[doc,jshactive,fully](1) at (1,-1){1};
+\node[doc,active,fully](2) at (2,-2){2};
+\node[doc](3) at (3,-2){3};
+\node[doc](4) at (4,-1){4};
+\node[draw,dotted,fit=(0)]{};
+\node[draw,dotted,fit=(1)(4)]{};
+\node[draw,dotted,fit=(2)(3)]{};
+\draw[->](0)--(1);
+\draw[->](0)to[out=-20,in=90](2);
+\end{tikzpicture}\]
+With these patches, we conjecture that our fundamental property is true,
+and moreover that traversal forms an inverse of navigation.
 
-\begin{goal}
+\begin{conjecture}[Traverse-then-traverse]
+\label{thm:homomorphism}
+  If $H$ traverses the history by $\delta$ to $H'$
+  and $H'$ traverses the history by $\delta'$ to $H''$
+  then $H$ traverses the history by $\delta+\delta'$ to $H''$.
+  \QED
+\end{conjecture}
+
+\begin{conjecture}[Navigate-then-traverse]
   If $\aDoc$ in $\aNH$ navigates to $\aDoc'$ in $\aNH'$,
   and $\aNH'$ traverses the history by $-1$ to $\aNH''$,
-  then $\FullyActive=\FullyActive''$.
-\end{goal}
+  then $\Active=\Active''$.
+  \QED
+\end{conjecture}
+%
+[TODO: prove these!]
 
 %% \begin{counterexample}
 %%   \[\begin{tikzpicture}
