@@ -406,6 +406,10 @@ These definitions are intended to align with the specification, for example
 \end{quote}
 which (eliding the concept of ``current entry of the joint session history'')
 corresponds to the above definitions of joint session future and past.
+%
+We now consider how to formalize operations on navigation histories.
+staring with \emph{navigation}, which is triggered by following hyperlinks,
+or other actions which trigger document loading.
 
 \begin{definition}[Navigation]
 Define \emph{deleting $\aDoc$ from $\aNH$}, when $\aDoc\not\in\FullyActive$, to be $\aNH'$ where:
@@ -430,6 +434,7 @@ $\aDoc'\notin\Docs$, to be $\aNH'$ where:
   $\bDoc \parentOf \aDoc$ and $\cDoc = \aDoc'$, and
 \item $\bDoc \eqSess' \cDoc$ whenever
   $\bDoc \eqSess \cDoc$, or
+  $\bDoc=\cDoc$, or
   $\bDoc \eqSess \aDoc$ and $\cDoc = \aDoc'$, or
   $\aDoc \eqSess \cDoc$ and $\bDoc = \aDoc'$.
 \end{itemize}
@@ -437,9 +442,60 @@ Define \emph{navigating from $\aDoc$ to $\aDoc'$ in $\aNH$} to be the result of:
 \begin{itemize}
 \item deleting the session future of $\aDoc$, and
 \item replacing $\aDoc$ by $\aDoc'$.
+  \QED
 \end{itemize}
 \end{definition}
-
+There are two parts to navigation from $\aDoc$ to $\aDoc'$: deleting the session
+future of $\aDoc$, followed by replacing $\aDoc$ by $\aDoc'$. For example,
+navigating from $1$ to $6$ in:
+\[\begin{tikzpicture}
+  \node[doc,active,fully](0) at (0,0){0};
+  \node[doc,jshactive,fully](1) at (1,-1){1};
+  \node[doc](2) at (2,-2){2};
+  \node[doc,active,fully](3) at (3,0){3};
+  \node[doc,active,fully](4) at (4,-2){4};
+  \node[doc](5) at (5,-1){5};
+  \node[draw,dotted,fit=(0)] {};
+  \node[draw,dotted,fit=(1)(5)] {};
+  \node[draw,dotted,fit=(2)(4)] {};
+  \node[draw,dotted,fit=(3)] {};
+  \draw[->](0)--(1);
+  \draw[->](1)--(4);
+  \draw[->](0)--(3);
+\end{tikzpicture}\]
+we first delete the session future of $1$ (which is $\{5\}$):
+\[\begin{tikzpicture}
+  \node[doc,active,fully](0) at (0,0){0};
+  \node[doc,jshactive,fully](1) at (1,-1){1};
+  \node[doc](2) at (2,-2){2};
+  \node[doc,active,fully](3) at (3,0){3};
+  \node[doc,active,fully](4) at (4,-2){4};
+  \node[draw,dotted,fit=(0)] {};
+  \node[draw,dotted,fit=(1)] {};
+  \node[draw,dotted,fit=(2)(4)] {};
+  \node[draw,dotted,fit=(3)] {};
+  \draw[->](0)--(1);
+  \draw[->](1)--(4);
+  \draw[->](0)--(3);
+\end{tikzpicture}\]
+then replace $1$ by $6$:
+\[\begin{tikzpicture}
+  \node[doc,active,fully](0) at (0,0){0};
+  \node[doc](1) at (1,-1){1};
+  \node[doc](2) at (2,-2){2};
+  \node[doc,active,fully](3) at (3,0){3};
+  \node[doc,active](4) at (4,-2){4};
+  \node[doc,jshactive,fully](6) at (6,-1){6};
+  \node[draw,dotted,fit=(0)] {};
+  \node[draw,dotted,fit=(1)(6)] {};
+  \node[draw,dotted,fit=(2)(4)] {};
+  \node[draw,dotted,fit=(3)] {};
+  \draw[->](0)--(6);
+  \draw[->](1)--(4);
+  \draw[->](0)--(3);
+\end{tikzpicture}\]
+We also define \emph{traversing the history}, which changes the active
+documents.
 \begin{definition}[Traversal]
 Define \emph{traversing the history to $\aDoc$ in $\aNH$} to be $\aNH'$ where:
 \begin{itemize}
@@ -462,16 +518,82 @@ Define \emph{$\aNH$ traverses the history by $-\delta$ to $\aNH'$} when:
 \end{itemize}
 Define \emph{$\aNH$ traverses the history by $0$ to $\aNH'$} when $\aNH=\aNH'$.
 \end{definition}
+For example, to traverse the history by $-2$ in:
+\[\begin{tikzpicture}
+  \node[doc,active,fully](0) at (0,0){0};
+  \node[doc](1) at (1,-1){1};
+  \node[doc](2) at (2,-2){2};
+  \node[doc,active,fully](3) at (3,0){3};
+  \node[doc,active](4) at (4,-2){4};
+  \node[doc,jshactive,fully](6) at (6,-1){6};
+  \node[draw,dotted,fit=(0)] {};
+  \node[draw,dotted,fit=(1)(6)] {};
+  \node[draw,dotted,fit=(2)(4)] {};
+  \node[draw,dotted,fit=(3)] {};
+  \draw[->](0)--(6);
+  \draw[->](1)--(4);
+  \draw[->](0)--(3);
+\end{tikzpicture}\]
+we find the joint session past (which is $1 \ltChron 2$)
+and traverse the history to the second item (which is $2$)
+to arrive at:
+\[\begin{tikzpicture}
+  \node[doc,active,fully](0) at (0,0){0};
+  \node[doc,jshactive,fully](1) at (1,-1){1};
+  \node[doc](2) at (2,-2){2};
+  \node[doc,active,fully](3) at (3,0){3};
+  \node[doc,active,fully](4) at (4,-2){4};
+  \node[doc](6) at (6,-1){6};
+  \node[draw,dotted,fit=(0)] {};
+  \node[draw,dotted,fit=(1)(6)] {};
+  \node[draw,dotted,fit=(2)(4)] {};
+  \node[draw,dotted,fit=(3)] {};
+  \draw[->](0)--(1);
+  \draw[->](1)--(4);
+  \draw[->](0)--(3);
+\end{tikzpicture}\]
+These definitions are intended to formally capture the HTML
+specification, for example \cite[7.7.2]{whatwg} includes:
+\begin{quote}
+  To \textbf{traverse the history by a delta} $\delta$, the user agent
+  must append a task to this top-level browsing context's session
+  history traversal queue, the task consisting of running the
+  following steps:
+  \begin{enumerate}
+    
+  \item If the index of the current entry of the joint session history
+    plus $\delta$ is less than zero or greater than or equal to the
+    number of items in the joint session history, then abort these
+    steps.
+
+  \item Let \emph{specified entry} be the entry in the joint session
+    history whose index is the sum of $\delta$ and the index of the
+    current entry of the joint session history.
+
+  \item Let \emph{specified browsing context} be the browsing context
+    of the specified entry.
+
+  \item If the specified browsing context's active document's unload a
+    document algorithm is currently running, abort these steps.
+
+  \item Queue a task that consists of running the following
+    substeps. The relevant event loop is that of the specified
+    browsing context's active document. The task source for the queued
+    task is the history traversal task source.
+
+    \[\vdots\]
+
+    \begin{itemize}
+
+    \item[3.] Traverse the history of the specified browsing context
+      to the specified entry.
+
+    \end{itemize}
+  \end{enumerate}
+\end{quote}
 
 \subsection{Properties}
 \label{sec:properties}
-
-[State some goals, e.g. go($\delta$);go($\delta'$) is the same as go($\delta+\delta'$),
-  navigate;go($-1$) has the same fully active documents as doing nothing,
-  session history can be implemented effeciently in memory...]
-
-[I suspect none of these are true of the current spec, can we find a model in which
-  they are true?]
 
 \begin{goal}
 \label{goal:homomorphism}
