@@ -61,23 +61,21 @@
 
 \subparagraph{Abstact:}
 Navigation has been a core component of the web since its inception:
-users and scripts can follow hyperlinks, or can go back or forwards
-through the navigation history. Despite its long existence, navigation
-history has no formal model or properties. In this paper, we present a
-formal model aligned with the \textsc{whatwg} specification of navigation
+users and scripts can follow hyperlinks, and can go back or forwards
+through the navigation history. In this paper, we present a formal
+model aligned with the \textsc{whatwg} specification of navigation
 history, and investigate its properties. The fundamental property of
-navigation history is that traversing the history by $\delta$
-then by $\delta'$ should be the same as traversing by
-$\delta+\delta'$. In particular, traversing by $+1$ (forward) then by
-$-1$ (back) is the same as traversing by $0$ (doing nothing). We show
-that the specification-aligned model does not satisfy this property,
-by exhibiting a series of counter-examples, which motivate three
-patches to the model. We present a
-series of experiments, showing that browsers are inconsistent in their
-implementation of navigation history, but that their behaviour is
-closer to the patched model than to the specification-aligned
-model. We propose patches to the specification to align it with the
-patched model.
+navigation history is that traversing the history by $\delta$ then by
+$\delta'$ should be the same as traversing by $\delta+\delta'$. In
+particular, traversing by $+1$ (forward) then by $-1$ (back) is the
+same as traversing by $0$ (doing nothing). We show that the
+specification-aligned model does not satisfy this property, by
+exhibiting a series of counter-examples, which motivate three patches
+to the model. We present a series of experiments, showing that
+browsers are inconsistent in their implementation of navigation
+history, but that their behaviour is closer to the patched model than
+to the specification-aligned model. We propose patches to the
+specification to align it with the patched model.
 
 \subparagraph{ACM Classification:}
 D.2.1 Requirements/Specifications.
@@ -92,15 +90,18 @@ Web browsers.
 \section{Introduction}
 
 Navigation has been a core component of the web since its inception:
-users and scripts can follow hyperlinks, or can go back or forwards
+users and scripts can follow hyperlinks, and can go back or forwards
 through the navigation history. Users are exposed to this functionality
 through following hyperlinks, and by the forward and back buttons.
 Scripts have many ways of accessing session history, via the
 navigation API~\cite[\S7.7]{whatwg} and the \verb|element.click()| method.
 
-Despite its long existence, navigation history has no formal model or
-properties. The specification of the navigation API is informal, and
-has complex dependencies on the rest of the HTML
+% TODO: add detail to citations, cite Harel.
+Prior formalizations of navigation history
+include~\cite{HH:2006,Haydar:2004,HPS:2004,LHYT:2000,WP:2003}, which
+predate and are not aligned with the \textsc{whatwg}
+specification~\cite{whatwg}.  The specification of the navigation API
+is informal, and has complex dependencies on the rest of the HTML
 specification~\cite{whatwg}. There is little discussion of the goals
 of the API, and an unclear alignment with browser implementations.
 
@@ -135,8 +136,8 @@ after the currently active document by a fresh active document:
 \[\begin{tikzpicture}
   \node[doc](0) at (0,0){0};
   \node[doc](1) at (1,0){1};
-  \node[doc,jshactive,fully](4) at (4,0){4};
-  \node[draw,dotted,fit=(0)(1)(4)] {};
+  \node[doc,jshactive,fully](3) at (3,0){3};
+  \node[draw,dotted,fit=(0)(1)(3)] {};
 \end{tikzpicture}\]
 Users can also traverse the history by more than one document
 at a time, for example by using a pull-down menu from the back
@@ -146,8 +147,8 @@ to get:
 \[\begin{tikzpicture}
   \node[doc,jshactive,fully](0) at (0,0){0};
   \node[doc](1) at (1,0){1};
-  \node[doc](4) at (4,0){4};
-  \node[draw,dotted,fit=(0)(1)(4)] {};
+  \node[doc](3) at (3,0){3};
+  \node[draw,dotted,fit=(0)(1)(3)] {};
 \end{tikzpicture}\]
 We formalize the notions of traversal and navigation in
 \S\ref{sec:model}, and show that they satisfy two pleasant
@@ -578,11 +579,7 @@ specification, for example \cite[7.7.2]{whatwg} includes:
     document algorithm is currently running, abort these steps.
 
   \item Queue a task that consists of running the following
-    substeps. The relevant event loop is that of the specified
-    browsing context's active document. The task source for the queued
-    task is the history traversal task source.
-
-    \[\vdots\]
+    substeps [\dots]
 
     \begin{itemize}
 
