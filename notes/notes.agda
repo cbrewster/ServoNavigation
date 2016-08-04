@@ -6,8 +6,8 @@ Subset(X) = X → Set
 _∈_ : ∀ {X} → X → Subset(X) → Set
 (x ∈ A) = A(x)
 
-_⊆_ : ∀ {X} → Subset(X) → Subset(X) → Set
-(A ⊆ B) = ∀ x → (x ∈ A) → (x ∈ B)
+-- _⊆_ : ∀ {X} → Subset(X) → Subset(X) → Set
+-- (A ⊆ B) = ∀ x → (x ∈ A) → (x ∈ B)
 
 Rel : Set → Set₁
 Rel(X) = X → X → Set
@@ -24,9 +24,9 @@ data _^_ (X : Set) : ℕ → Set where
   nil : (X ^ zero)
   _∷_ : ∀ {n} → X → (X ^ n) → (X ^ succ(n))
 
-_++_ : ∀ {X m n} → (X ^ m) → (X ^ n) → (X ^ (m + n))
-(nil ++ ys) = ys
-((x ∷ xs) ++ ys) = x ∷ (xs ++ ys)
+-- _++_ : ∀ {X m n} → (X ^ m) → (X ^ n) → (X ^ (m + n))
+-- (nil ++ ys) = ys
+-- ((x ∷ xs) ++ ys) = x ∷ (xs ++ ys)
 
 data _≡_ {D : Set} (d : D) : D → Set where
   refl : (d ≡ d)
@@ -168,9 +168,9 @@ H traverse-to d = H′ where
               ; active = active′ ; active-A = active′-A′ ; active-~ = active′-~ ; active-uniq = active′-uniq
               ; ⇒-trans-~ = ⇒-trans-~ ; ⇒-impl-≤ = ⇒-impl-≤ }
 
-_traverse-to-seq_ : ∀ {D n} → NavigationHistory(D) → (D ^ n) → NavigationHistory(D)
-(H traverse-to-seq nil) = H
-(H traverse-to-seq (d ∷ ds)) = (H traverse-to d) traverse-to-seq ds
+_traverses-to_ : ∀ {D n} → NavigationHistory(D) → (D ^ n) → NavigationHistory(D)
+(H traverses-to nil) = H
+(H traverses-to (d ∷ ds)) = (H traverse-to d) traverses-to ds
 
 record JSF {D} (H : NavigationHistory(D)) (d : D) : Set where
 
@@ -206,9 +206,8 @@ record μJSFs {D} (H : NavigationHistory(D)) {n} (ds : D ^ n) : Set where
   field ds∈JSF↓ : ds ∈ JSF-Downclosed(H)
   field ds∈Sorted : ds ∈ Sorted(TO)
 
-μJSFs-alt : ∀ {D} (H : NavigationHistory(D)) {n} → Subset(D ^ n)
-μJSFs-alt(H) nil = ⊤
-μJSFs-alt(H) (d ∷ ds) = (d ∈ μJSF(H)) ∧ (ds ∈ μJSFs-alt(H traverse-to d))
+data _traverses-fwd-by_to_ {D} (H : NavigationHistory(D)) (δ : ℕ) : NavigationHistory(D) → Set where
+  μjsf : ∀ (ds : D ^ δ) → (ds ∈ μJSFs(H)) → (H traverses-fwd-by δ to (H traverses-to ds))
 
 JSF-refl-traverse : ∀ {D} (H : NavigationHistory(D)) d e →
   (d ∈ JSF(H)) →
@@ -326,10 +325,6 @@ JSF-traverse-∉ H d .d d∈JSF′ refl = wrong where
   ds∈Sorted with d∷ds∈Sorted
   ds∈Sorted | (_ , ds∈Sorted) = ds∈Sorted
 
-μJSFs-nil : ∀ {D} (H : NavigationHistory(D)) →
-  (nil ∈ μJSFs(H))
-μJSFs-nil H = record { ds∈JSF = λ d () ; ds∈JSF↓ = λ d e d≤e d∈JSF () ; ds∈Sorted = tt }
-
 μJSFs-cons : ∀ {D} (H : NavigationHistory(D)) {n} d (ds : D ^ n) →
   (d ∈ μJSF(H)) →
   (ds ∈ μJSFs(H traverse-to d)) →
@@ -353,26 +348,16 @@ JSF-traverse-∉ H d .d d∈JSF′ refl = wrong where
   d∷ds∈Sorted : (d ∷ ds) ∈ Sorted(TO)
   d∷ds∈Sorted = ((λ e e∈ds → (minimal e (JSF-refl-traverse H d e d∈JSF (ds∈JSF e e∈ds)) , JSF-traverse-∉ H d e (ds∈JSF e e∈ds))) , ds∈Sorted)
 
-μJSFs-impl-μJSFs-alt : ∀ {D} (H : NavigationHistory(D)) {n} (ds : D ^ n) →
-  (ds ∈ μJSFs(H)) →
-  (ds ∈ μJSFs-alt(H))
-μJSFs-impl-μJSFs-alt H nil nil∈μJSF = tt
-μJSFs-impl-μJSFs-alt H (d ∷ ds) d∷ds∈μJSF = (μJSFs-head H d ds d∷ds∈μJSF , μJSFs-impl-μJSFs-alt (H traverse-to d) ds (μJSFs-tail H d ds d∷ds∈μJSF))
+Theorem : ∀ {D} {H H′ H″ : NavigationHistory(D)} {δ δ′ : ℕ} →
+  (H traverses-fwd-by δ to H′) →
+  (H′ traverses-fwd-by δ′ to H″) →
+  (H traverses-fwd-by (δ + δ′) to H″)
+Theorem {D} (μjsf ds ds∈μJSF) = Lemma ds ds∈μJSF where
 
-μJSFs-alt-impl-μJSFs : ∀ {D} (H : NavigationHistory(D)) {n} (ds : D ^ n) →
-  (ds ∈ μJSFs-alt(H)) →
-  (ds ∈ μJSFs(H))
-μJSFs-alt-impl-μJSFs H nil tt = μJSFs-nil H
-μJSFs-alt-impl-μJSFs H (d ∷ ds) (d∈μJSF , ds∈μJSF) = μJSFs-cons H d ds d∈μJSF (μJSFs-alt-impl-μJSFs (H traverse-to d) ds ds∈μJSF)
-μJSF-alt-resp-++ : ∀ {D} (H : NavigationHistory(D)) {n n′} (ds : D ^ n) (ds′ : D ^ n′) →
-  (ds ∈ μJSFs-alt(H)) →
-  (ds′ ∈ μJSFs-alt(H traverse-to-seq ds)) →
-  ((ds ++ ds′) ∈ μJSFs-alt(H))
-μJSF-alt-resp-++ H nil ds′ nilJSF ds′∈JSF′ = ds′∈JSF′
-μJSF-alt-resp-++ H (d ∷ ds) ds′ (d∈μJSF , ds∈μJSF) ds′∈JSF′ = (d∈μJSF , μJSF-alt-resp-++ (H traverse-to d) ds ds′ ds∈μJSF ds′∈JSF′)
-
-μJSF-resp-++ : ∀ {D} (H : NavigationHistory(D)) {n n′} (ds : D ^ n) (ds′ : D ^ n′) →
-  (ds ∈ μJSFs(H)) →
-  (ds′ ∈ μJSFs(H traverse-to-seq ds)) →
-  ((ds ++ ds′) ∈ μJSFs(H))
-μJSF-resp-++ H ds ds′ ds∈μJSF ds′∈μJSF′ = μJSFs-alt-impl-μJSFs H (ds ++ ds′) (μJSF-alt-resp-++ H ds ds′ (μJSFs-impl-μJSFs-alt H ds ds∈μJSF) (μJSFs-impl-μJSFs-alt (H traverse-to-seq ds) ds′ ds′∈μJSF′))
+  Lemma : ∀ {H δ δ′ H″} (ds : D ^ δ) →
+    (ds ∈ μJSFs(H)) → 
+    ((H traverses-to ds) traverses-fwd-by δ′ to H″) →
+    (H traverses-fwd-by (δ + δ′) to H″)
+  Lemma nil _ H′-to-H″ = H′-to-H″
+  Lemma (d ∷ ds) d∷ds∈μJSF H′-to-H″ with Lemma ds (μJSFs-tail _ d ds d∷ds∈μJSF) H′-to-H″
+  Lemma (d ∷ ds) d∷ds∈μJSF H′-to-H″ | μjsf ds′ ds′∈μJSF′ = μjsf (d ∷ ds′) (μJSFs-cons _ d ds′ (μJSFs-head _ d ds d∷ds∈μJSF) ds′∈μJSF′)
