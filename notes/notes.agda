@@ -6,9 +6,6 @@ Subset(X) = X → Set
 _∈_ : ∀ {X} → X → Subset(X) → Set
 (x ∈ A) = A(x)
 
--- _⊆_ : ∀ {X} → Subset(X) → Subset(X) → Set
--- (A ⊆ B) = ∀ x → (x ∈ A) → (x ∈ B)
-
 Rel : Set → Set₁
 Rel(X) = X → X → Set
 
@@ -23,10 +20,6 @@ _+_ : ℕ → ℕ → ℕ
 data _^_ (X : Set) : ℕ → Set where
   nil : (X ^ zero)
   _∷_ : ∀ {n} → X → (X ^ n) → (X ^ succ(n))
-
--- _++_ : ∀ {X m n} → (X ^ m) → (X ^ n) → (X ^ (m + n))
--- (nil ++ ys) = ys
--- ((x ∷ xs) ++ ys) = x ∷ (xs ++ ys)
 
 data _≡_ {D : Set} (d : D) : D → Set where
   refl : (d ≡ d)
