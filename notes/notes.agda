@@ -70,13 +70,12 @@ record Forest(D : Set) : Set₁ where
   field ⇒-parent-uniq : ∀ {d e f} → (d ⇒ f) → (e ⇒ f) → (d ≡ e)
   field ⇒-acyclic : ∀ {d} → (d ⇒+ d) → ⊥
   
-record TotalOrder(D : Set) : Set₁ where
+record PartialOrder(D : Set) : Set₁ where
 
   field _≤_ : Rel(D)
   field ≤-refl : ∀ {d} → (d ≤ d)
   field ≤-trans : ∀ {d e f} → (d ≤ e) → (e ≤ f) → (d ≤ f)
   field ≤-asym : ∀ {d e} → (d ≤ e) → (e ≤ d) → (d ≡ e)
-  field ≤-total : ∀ {d e} → (d ≤ e) ∨ ((e ≤ d) ∧ ¬(e ≡ d))
 
   _<_ : Rel(D)
   d < e = (d ≤ e) ∧ ¬(d ≡ e)
@@ -92,6 +91,13 @@ record TotalOrder(D : Set) : Set₁ where
 
   <-trans-≤ : ∀ {d e f} → (d < e) → (e ≤ f) → (d < f)
   <-trans-≤ (d≤e , d≠e) e≤f = (≤-trans d≤e e≤f , (λ d≡f → d≠e (trans d≡f (≤-asym (≤-trans (≡-impl-≤ (sym d≡f)) d≤e) e≤f))))
+  
+record TotalOrder(D : Set) : Set₁ where
+
+  field PO : PartialOrder(D)
+  open PartialOrder PO public
+
+  field ≤-total : ∀ {d e} → (d ≤ e) ∨ (e < d)
   
 record Equivalence(D : Set) : Set₁ where
 
