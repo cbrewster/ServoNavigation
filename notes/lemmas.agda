@@ -3,6 +3,8 @@ module lemmas where
 open import prelude
 open import defns
 
+postulate NH-CONG : ∀ {D} (H H′ : NavigationHistory(D)) → let open NavigationHistory H in let open NavigationHistory H′ using () renaming ( A to A′ ; Fo to Fo′ ; Eq to Eq′ ; FTO to FTO′ ) in (A ⊆ A′) → (A′ ⊆ A) → (Fo ≣ Fo′) → (Eq ≣ Eq′) → (FTO ≣ FTO′) → (H ≣ H′)
+
 BT-hd : ∀ {D} {H : NavigationHistory(D)} {n} d (ds : D ^ n) →
   ((d ∷ ds) ∈ BackTarget*(H)) →
   (d ∈ BackTarget(H))
@@ -115,3 +117,98 @@ BT-cons {D} {H} d d∈CGB ds ((d∈A , _) , d-max) ((ds↓ , ds∈JSP′∩CGB) 
 
     es≤ds : es ≤* ds
     es≤ds = ds-max es (es↓ , All-resp-⊆ lemma es (All-resp-∩ es (es<d , es∈A∪JSP∩CGB)))
+
+FT-hd : ∀ {D} {H : NavigationHistory(D)} {n} d (ds : D ^ n) →
+  ((d ∷ ds) ∈ FwdTarget*(H)) →
+  (d ∈ FwdTarget(H))
+FT-hd {D} {H} d ds (((d<ds , ds↑) , (d∈JSF , ds∈JSF)) , d∷ds-min) = (d∈JSF , d-min) where
+
+  open NavigationHistory H
+  
+  d-min : ∀ e → (e ∈ JointSessionFuture) → (d ≤ e)
+  d-min e e∈JSF with ≤-total d e
+  d-min e e∈JSF | in₁ d≤e = d≤e
+  d-min e e∈JSF | in₂ e<d with d∷ds-min (e ∷ ds) (((All-resp-⊆ (λ f → <-trans e<d) ds d<ds) , ds↑) , (e∈JSF , ds∈JSF))
+  d-min e e∈JSF | in₂ e<d | (d≤e , ds≤ds) = d≤e
+
+FT-tl : ∀ {D} {H : NavigationHistory(D)} {n} d (ds : D ^ n) →
+  ((d ∷ ds) ∈ FwdTarget*(H)) →
+  (ds ∈ FwdTarget*(H traverse-to d))
+FT-tl {D} {H} d ds (((d<ds , ds↑) , ((a , (a∈A , (a<d , a~d))) , ds∈JSF)) , d∷ds-min) = ((ds↑ , ds∈JSF′) , ds-min) where
+
+  H′ = (H traverse-to d)
+
+  open NavigationHistory H
+  open NavigationHistory H′ using () renaming (JointSessionFuture to JointSessionFuture′)
+
+  lemma : ((Future(d) ∩ JointSessionFuture) ⊆ JointSessionFuture′)
+  lemma e (d<e , (b , (b∈A , (b<e , b~e)))) with d ~? b
+  lemma e (d<e , (b , (b∈A , (b<e , b~e)))) | in₁ d~b = (d , (in₂ refl , (d<e , (~-trans d~b b~e))))
+  lemma e (d<e , (b , (b∈A , (b<e , b~e)))) | in₂ d≁b = (b , (in₁ (d≁b , b∈A) , (b<e , b~e)))
+
+  lemma′ : (JointSessionFuture′ ⊆ Future(d))
+  lemma′ e (b  , (in₁ (d≁b , b∈A) , (b<e , b~e))) with ≤-total e d 
+  lemma′ e (b  , (in₁ (d≁b , b∈A) , (b<e , b~e))) | in₁ e≤d with d∷ds-min (e ∷ ds) (((All-resp-⊆ (λ f → ≤-trans-< e≤d) ds d<ds) , ds↑) , ((b , (b∈A , (b<e , b~e))) , ds∈JSF))
+  lemma′ e (b  , (in₁ (d≁b , b∈A) , (b<e , b~e))) | in₁ e≤d | (d≤e , ds≤ds) = contradiction (d≁b (~-trans (≡-impl-~ (≤-asym d≤e e≤d)) (~-sym b~e)))
+  lemma′ e (b  , (in₁ (d≁b , b∈A) , (b<e , b~e))) | in₂ d<e = d<e
+  lemma′ e (.d , (in₂ refl        , (d<e , d~e))) = d<e
+  
+  lemma″ : (JointSessionFuture′ ⊆ JointSessionFuture)
+  lemma″ e (b  , (in₁ (d≁b , b∈A) , (b<e , b~e))) = (b , (b∈A , (b<e , b~e)))
+  lemma″ e (.d , (in₂ refl        , (d<e , d~e))) = a , (a∈A , (<-trans a<d d<e , ~-trans a~d d~e))
+ 
+  ds∈JSF′ : (ds ∈ All(JointSessionFuture′))
+  ds∈JSF′ = All-resp-⊆ lemma ds (All-resp-∩ ds (d<ds , ds∈JSF))
+
+  ds-min : ∀ es → (es ∈ (Increasing ∩ All(JointSessionFuture′))) → (ds ≤* es)
+  ds-min es (es↑ , es∈JSF′) with d∷ds-min (d ∷ es) ((d<es , es↑) , ((a , (a∈A , (a<d , a~d))) , es∈JSF)) where
+
+    d<es : es ∈ All(Future(d))
+    d<es = All-resp-⊆ lemma′ es es∈JSF′
+
+    es∈JSF : es ∈ All(JointSessionFuture)
+    es∈JSF = All-resp-⊆ lemma″ es es∈JSF′
+    
+  ds-min es (es↑ , es∈JSF′) | (d≤d , ds≤es) = ds≤es
+
+from-to : ∀ {D} {H : NavigationHistory(D)} d e d∈CGB →
+  (d ∈ BackTarget(H)) →
+  (e ∈ FwdTarget(H traverse-from d ∵ d∈CGB)) →
+  (H ≣ ((H traverse-from d ∵ d∈CGB) traverse-to e))
+from-to {D} {H} d e d∈CGB ((d∈A , _) , d-max) e∈FT′ with lemma e∈FT′ where
+
+  H′ = (H traverse-from d ∵ d∈CGB)
+
+  open NavigationHistory H
+  open NavigationHistory H′ using () renaming (JointSessionFuture to JointSessionFuture′ ; FwdTarget to FwdTarget′)
+   
+  lemma : (e ∈ FwdTarget′) → (d ≡ e)
+  lemma (e∈JSP′ , e-min) with max(SessionPast(d)) ∵ d∈CGB | ≤-total d e
+  lemma (e∈JSP′ , e-min) | (c , ((c<d , c~d) , c-max)) | in₁ d≤e = ≤-asym d≤e (e-min d (c , (in₂ refl , (c<d , c~d))))
+  lemma ((a  , (in₁ (c≁a , a∈A) , (a<e , a~e))) , e-min) | c , ((c<d , c~d) , c-max) | in₂ e<d = contradiction (<-impl-≱ e<d (PATCH a∈A d∈A a~e c~d a<e c<d))
+  lemma ((.c , (in₂ refl , (c<e , c~e))) , e-min) | c , ((c<d , c~d) , c-max) | in₂ e<d = contradiction (<-impl-≱ c<e (c-max e (e<d , ~-trans (~-sym c~e) c~d)))
+  
+from-to {D} {H} d .d d∈CGB ((d∈A , _) , d-max) e∈FT′ | refl = H=H″ where
+
+  H′ = (H traverse-from d ∵ d∈CGB)
+  H″ = (H′ traverse-to d)
+  
+  open NavigationHistory H
+  open NavigationHistory H″ using () renaming (A to A″)
+
+  A⊆A″ : (A ⊆ A″)
+  A⊆A″ f f∈A with d ~? f
+  A⊆A″ f f∈A | in₁ d~f with trans (active-uniq d f f∈A d~f) (sym (active-uniq d d d∈A ~-refl))
+  A⊆A″ .d  _ | in₁ d~f | refl = in₂ refl
+  A⊆A″ f f∈A | in₂ d≁f with max(SessionPast(d)) ∵ d∈CGB
+  A⊆A″ f f∈A | in₂ d≁f | (c , ((c<d , c~d) , c-max)) = in₁ (d≁f , (in₁ ((λ c~f → d≁f (~-trans (~-sym c~d) c~f)) , f∈A)))
+  
+  A″⊆A : (A″ ⊆ A)
+  A″⊆A f (in₁ (d≁f , in₁ (c≁f , f∈A))) = f∈A
+  A″⊆A ._ (in₁ (d≁c , in₂ refl)) with max(SessionPast(d)) ∵ d∈CGB
+  A″⊆A ._ (in₁ (d≁c , in₂ refl)) | (c , ((c<d , c~d) , c-max)) = contradiction (d≁c (~-sym c~d))
+  A″⊆A ._ (in₂ refl) = d∈A
+
+  H=H″ : (H ≣ H″)
+  H=H″ = NH-CONG H H″ A⊆A″ A″⊆A REFL REFL REFL
+

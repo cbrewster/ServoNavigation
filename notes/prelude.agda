@@ -54,6 +54,24 @@ sym refl = refl
 trans : ∀ {D} {d e f : D} → (d ≡ e) → (e ≡ f) → (d ≡ f)
 trans refl refl = refl
 
+subst : ∀ {X L R} (P : X → Set) → (L ≡ R) → (P R) → (P L)
+subst P refl p = p
+
+data _≣_ {X : Set₁} (x : X) : X → Set₁ where
+  REFL : (x ≣ x)
+
+SYM : ∀ {D} {d e : D} → (d ≣ e) → (e ≣ d)
+SYM REFL = REFL
+
+TRANS : ∀ {D} {d e f : D} → (d ≣ e) → (e ≣ f) → (d ≣ f)
+TRANS REFL REFL = REFL
+
+SUBST : ∀ {X L R} (P : X → Set) →
+  (L ≣ R) →
+  (P R) →
+  (P L)
+SUBST P REFL p = p
+
 record ⊤ : Set where
   constructor tt
 
@@ -126,6 +144,9 @@ record PartialOrder(D : Set) : Set₁ where
   <-trans-≤ : ∀ {d e f} → (d < e) → (e ≤ f) → (d < f)
   <-trans-≤ (d≤e , d≠e) e≤f = (≤-trans d≤e e≤f , (λ d≡f → d≠e (trans d≡f (≤-asym (≤-trans (≡-impl-≤ (sym d≡f)) d≤e) e≤f))))
 
+  ≤-trans-< : ∀ {d e f} → (d ≤ e) → (e < f) → (d < f)
+  ≤-trans-< d≤e (e≤f , e≠f) = (≤-trans d≤e e≤f , (λ d≡f → e≠f (trans (≤-asym (≤-trans e≤f (≡-impl-≤ (sym d≡f))) d≤e) d≡f)))
+
   <-trans : ∀ {d e f} → (d < e) → (e < f) → (d < f)
   <-trans d<e (e≤f , e≠f) = <-trans-≤ d<e e≤f
 
@@ -138,9 +159,16 @@ record PartialOrder(D : Set) : Set₁ where
   Past : D → Subset(D)
   Past(d) e = (e < d)
 
+  Future : D → Subset(D)
+  Future(d) e = (d < e)
+
   Decreasing : ∀ {n} → Subset(D ^ n)
   Decreasing nil = ⊤
   Decreasing (d ∷ ds) = (ds ∈ (All(Past(d)) ∩  Decreasing))
+
+  Increasing : ∀ {n} → Subset(D ^ n)
+  Increasing nil = ⊤
+  Increasing (d ∷ ds) = (ds ∈ (All(Future(d)) ∩  Increasing))
 
   _≤*_ : ∀ {n} → Rel(D ^ n)
   nil ≤* nil = ⊤

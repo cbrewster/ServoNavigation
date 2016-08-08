@@ -54,7 +54,7 @@ record NavigationHistory(D : Set) : Set₁ where
   BackTarget = Max(A ∩ CanGoBack)
 
   FwdTarget* : ∀ {n} → Subset(D ^ n)
-  FwdTarget* = Min*(All(JointSessionFuture))
+  FwdTarget* = Min*(Increasing ∩ All(JointSessionFuture))
 
   BackTarget* : ∀ {n} → Subset(D ^ n)
   BackTarget* = Max*(Decreasing ∩ All((A ∪ JointSessionPast) ∩ CanGoBack))

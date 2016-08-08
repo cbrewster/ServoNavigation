@@ -4,68 +4,6 @@ open import prelude
 open import defns
 open import lemmas
 
-data _≣_ {X : Set₁} (x : X) : X → Set₁ where
-  REFL : (x ≣ x)
-
-SUBST : ∀ {X L R} (P : X → Set) →
-  (L ≣ R) →
-  (P R) →
-  (P L)
-SUBST P REFL p = p
-
-FT-hd : ∀ {D} {H : NavigationHistory(D)} {n} d (ds : D ^ n) →
-  ((d ∷ ds) ∈ FwdTarget*(H)) →
-  (d ∈ FwdTarget(H))
-FT-hd = {! STILL TO DO !}
-
-FT-tl : ∀ {D} {H : NavigationHistory(D)} {n} d (ds : D ^ n) →
-  ((d ∷ ds) ∈ FwdTarget*(H)) →
-  (ds ∈ FwdTarget*(H traverse-to d))
-FT-tl = {! STILL TO DO !}
-
-postulate NH-CONG : ∀ {D} (H H′ : NavigationHistory(D)) → let open NavigationHistory H in let open NavigationHistory H′ using () renaming ( A to A′ ; Fo to Fo′ ; Eq to Eq′ ; FTO to FTO′ ) in (A ⊆ A′) → (A′ ⊆ A) → (Fo ≣ Fo′) → (Eq ≣ Eq′) → (FTO ≣ FTO′) → (H ≣ H′)
-  
-from-to : ∀ {D} {H : NavigationHistory(D)} d e d∈CGB →
-  (d ∈ BackTarget(H)) →
-  (e ∈ FwdTarget(H traverse-from d ∵ d∈CGB)) →
-  (H ≣ ((H traverse-from d ∵ d∈CGB) traverse-to e))
-from-to {D} {H} d e d∈CGB ((d∈A , _) , d-max) e∈FT′ with lemma e∈FT′ where
-
-  H′ = (H traverse-from d ∵ d∈CGB)
-
-  open NavigationHistory H
-  open NavigationHistory H′ using () renaming (JointSessionFuture to JointSessionFuture′ ; FwdTarget to FwdTarget′)
-   
-  lemma : (e ∈ FwdTarget′) → (d ≡ e)
-  lemma (e∈JSP′ , e-min) with max(SessionPast(d)) ∵ d∈CGB | ≤-total d e
-  lemma (e∈JSP′ , e-min) | (c , ((c<d , c~d) , c-max)) | in₁ d≤e = ≤-asym d≤e (e-min d (c , (in₂ refl , (c<d , c~d))))
-  lemma ((a  , (in₁ (c≁a , a∈A) , (a<e , a~e))) , e-min) | c , ((c<d , c~d) , c-max) | in₂ e<d = contradiction (<-impl-≱ e<d (PATCH a∈A d∈A a~e c~d a<e c<d))
-  lemma ((.c , (in₂ refl , (c<e , c~e))) , e-min) | c , ((c<d , c~d) , c-max) | in₂ e<d = contradiction (<-impl-≱ c<e (c-max e (e<d , ~-trans (~-sym c~e) c~d)))
-  
-from-to {D} {H} d .d d∈CGB ((d∈A , _) , d-max) e∈FT′ | refl = H=H″ where
-
-  H′ = (H traverse-from d ∵ d∈CGB)
-  H″ = (H′ traverse-to d)
-  
-  open NavigationHistory H
-  open NavigationHistory H″ using () renaming (A to A″)
-
-  A⊆A″ : (A ⊆ A″)
-  A⊆A″ f f∈A with d ~? f
-  A⊆A″ f f∈A | in₁ d~f with trans (active-uniq d f f∈A d~f) (sym (active-uniq d d d∈A ~-refl))
-  A⊆A″ .d  _ | in₁ d~f | refl = in₂ refl
-  A⊆A″ f f∈A | in₂ d≁f with max(SessionPast(d)) ∵ d∈CGB
-  A⊆A″ f f∈A | in₂ d≁f | (c , ((c<d , c~d) , c-max)) = in₁ (d≁f , (in₁ ((λ c~f → d≁f (~-trans (~-sym c~d) c~f)) , f∈A)))
-  
-  A″⊆A : (A″ ⊆ A)
-  A″⊆A f (in₁ (d≁f , in₁ (c≁f , f∈A))) = f∈A
-  A″⊆A ._ (in₁ (d≁c , in₂ refl)) with max(SessionPast(d)) ∵ d∈CGB
-  A″⊆A ._ (in₁ (d≁c , in₂ refl)) | (c , ((c<d , c~d) , c-max)) = contradiction (d≁c (~-sym c~d))
-  A″⊆A ._ (in₂ refl) = d∈A
-
-  H=H″ : (H ≣ H″)
-  H=H″ = NH-CONG H H″ A⊆A″ A″⊆A REFL REFL REFL
-
 Theorem : ∀ {D} {H H′ H″ : NavigationHistory(D)} {δ δ′} →
   (H traverses-by (-ve δ) to H′) → 
   (H′ traverses-by δ′ to H″) → 
