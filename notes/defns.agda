@@ -17,8 +17,8 @@ record NavigationHistory(D : Set) : Set₁ where
   field active-A : ∀ d → A(active d)
   field active-~ : ∀ d → (active d ~ d)
   field active-uniq : ∀ d e → A(e) → (d ~ e) → (e ≡ active d)
-  
-  field ⇒-trans-~ : ∀ {d e f} → (d ⇒ e) → (e ~ f) → (d ⇒ f)
+
+  field PATCH : ∀ {a b c d} → (a ∈ A) → (d ∈ A) → (a ~ b) → (c ~ d) → (a < b) → (c < d) → (d ≤ b)
 
   _≲_ : Rel(D)
   (d ≲ e) = (d < e) ∧ (d ~ e)
@@ -35,19 +35,31 @@ record NavigationHistory(D : Set) : Set₁ where
   SessionPast : D → Subset(D)
   SessionPast(d) e = (e ≲ d)
 
+  SessionFuture : D → Subset(D)
+  SessionFuture(d) e = (d ≲ e)
+
   JointSessionPast : Subset(D)
-  JointSessionPast d = Inhabited (λ a → (a ∈ A) ∧ (d ≲ a))
+  JointSessionPast d = Inhabited (A ∩ SessionFuture(d))
+
+  JointSessionFuture : Subset(D)
+  JointSessionFuture d = Inhabited (A ∩ SessionPast(d))
 
   CanGoBack : Subset(D)
   CanGoBack d = Inhabited(SessionPast(d))
   
+  FwdTarget : Subset(D)
+  FwdTarget = Min(JointSessionFuture)
+
   BackTarget : Subset(D)
   BackTarget = Max(A ∩ CanGoBack)
+
+  FwdTarget* : ∀ {n} → Subset(D ^ n)
+  FwdTarget* = Min*(All(JointSessionFuture))
 
   BackTarget* : ∀ {n} → Subset(D ^ n)
   BackTarget* = Max*(Decreasing ∩ All((A ∪ JointSessionPast) ∩ CanGoBack))
   
-open NavigationHistory public using (BackTarget ; BackTarget*)
+open NavigationHistory public using (FwdTarget ; BackTarget ; FwdTarget* ; BackTarget*)
 
 _traverse-to_ : ∀ {D} → NavigationHistory(D) → D → NavigationHistory(D)
 H traverse-to d = H′ where
@@ -80,10 +92,12 @@ H traverse-to d = H′ where
   active′-uniq e .d (in₂ refl) e~d with (d ~? e)
   active′-uniq e .d (in₂ refl) e~d | in₁ d~e = refl
   active′-uniq e .d (in₂ refl) e~d | in₂ ¬d~e = contradiction (¬d~e (~-sym e~d))
+
+  postulate PATCH′ : ∀ {a b c d} → (a ∈ A′) → (d ∈ A′) → (a ~ b) → (c ~ d) → (a < b) → (c < d) → (d ≤ b)
   
   H′ = record { A = A′ ; Fo = Fo ; FTO = FTO ; Eq = Eq
               ; active = active′ ; active-A = active′-A′ ; active-~ = active′-~ ; active-uniq = active′-uniq
-              ; ⇒-trans-~ = ⇒-trans-~ }
+              ; PATCH = PATCH′ }
 
 _traverses-to_ : ∀ {D n} → NavigationHistory(D) → (D ^ n) → NavigationHistory(D)
 (H traverses-to nil) = H
@@ -103,5 +117,7 @@ _traverses-from_∵_ : ∀ {D n} (H : NavigationHistory(D)) (ds : D ^ n) →
 (H traverses-from nil ∵ tt) = H
 (H traverses-from (d ∷ ds) ∵ (d∈CGB , ds∈CGB)) = (H traverse-from d ∵ d∈CGB) traverses-from ds ∵ ds∈CGB
 
-data _traverses-back-by_to_ {D} (H : NavigationHistory(D)) (δ : ℕ) : (H : NavigationHistory(D)) → Set where
-  back : ∀ (ds : D ^ δ) ds∈CGB → (ds ∈ BackTarget*(H)) → (H traverses-back-by δ to (H traverses-from ds ∵ ds∈CGB))
+data _traverses-by_to_ {D} (H : NavigationHistory(D)) : ℤ → (H : NavigationHistory(D)) → Set where
+  fwd : ∀ {δ} (ds : D ^ (succ δ)) → (ds ∈ FwdTarget*(H)) → (H traverses-by (succ δ) to (H traverses-to ds))
+  back : ∀ {δ} (ds : D ^ δ) ds∈CGB → (ds ∈ BackTarget*(H)) → (H traverses-by (-ve δ) to (H traverses-from ds ∵ ds∈CGB))
+

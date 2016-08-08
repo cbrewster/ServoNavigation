@@ -21,9 +21,25 @@ data ℕ : Set where
   zero : ℕ
   succ : ℕ → ℕ
 
-_+_ : ℕ → ℕ → ℕ
-(zero + n) = n
-(succ m + n) = succ(m + n)
+data ℤ : Set where
+  succ : ℕ → ℤ
+  -ve : ℕ → ℤ
+
+sucz : ℤ → ℤ
+sucz (succ x) = succ (succ x)
+sucz (-ve zero) = succ zero
+sucz (-ve (succ x)) = -ve x
+
+pred : ℤ → ℤ
+pred (succ zero) = -ve zero
+pred (succ (succ x)) = succ x
+pred (-ve x) = -ve (succ x)
+
+_+_ : ℤ → ℤ → ℤ
+succ zero + y = sucz y
+succ (succ x) + y = sucz (succ x + y)
+-ve zero + y = y
+-ve (succ x) + y = pred (-ve x + y)
 
 data _^_ (X : Set) : ℕ → Set where
   nil : (X ^ zero)
@@ -113,6 +129,9 @@ record PartialOrder(D : Set) : Set₁ where
   <-trans : ∀ {d e f} → (d < e) → (e < f) → (d < f)
   <-trans d<e (e≤f , e≠f) = <-trans-≤ d<e e≤f
 
+  <-impl-≤ : ∀ {d e} → (d < e) → (d ≤ e)
+  <-impl-≤ (d≤e , d≠e) = d≤e
+  
   <-impl-≱ : ∀ {d e} → (d < e) → ¬(e ≤ d)
   <-impl-≱ (d≤e , d≠e) e≤d = d≠e (≤-asym d≤e e≤d)
   
@@ -132,6 +151,9 @@ record PartialOrder(D : Set) : Set₁ where
 
   Max : Subset(D) → Subset(D)
   Max(S) d = (d ∈ S) ∧ (∀ e → (e ∈ S) → (e ≤ d))
+
+  Min* : ∀ {n} → Subset(D ^ n) → Subset(D ^ n)
+  Min*(S) ds = (ds ∈ S) ∧ (∀ es → (es ∈ S) → (ds ≤* es))
 
   Max* : ∀ {n} → Subset(D ^ n) → Subset(D ^ n)
   Max*(S) ds = (ds ∈ S) ∧ (∀ es → (es ∈ S) → (es ≤* ds))

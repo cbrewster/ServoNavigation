@@ -60,7 +60,11 @@ BT-tl {D} {H} {n} d d∈CGB ds d∷ds∈BT | ((d>ds , (ds↓ , ds∈BT′)) , ds
   
   ds-max : ∀ es → (es ∈ (Decreasing ∩ All((A′ ∪ JointSessionPast′) ∩ CanGoBack))) → (es ≤* ds)
   ds-max es (es↓ , es∈BT′) = ds-max′ es (All-resp-⊆ lemma″ es es∈BT′ , (es↓ , All-resp-⊆ lemma′ es es∈BT′))
-  
+
+BT-nil :  ∀ {D} {H : NavigationHistory(D)} →
+  (nil ∈ BackTarget*(H))
+BT-nil = ((tt , tt) , λ { nil (tt , tt) → tt })
+
 BT-cons : ∀ {D} {H : NavigationHistory(D)} {n} d d∈CGB (ds : D ^ n) →
   (d ∈ BackTarget(H)) →
   (ds ∈ BackTarget*(H traverse-from d ∵ d∈CGB)) →
