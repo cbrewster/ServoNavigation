@@ -257,7 +257,7 @@ from-to {D} {H} d .d d∈CGB ((d∈A , _) , d-max) e∈FT′ | refl = H=H″ whe
 
   A⊆A″ : (A ⊆ A″)
   A⊆A″ f f∈A with d ~? f
-  A⊆A″ f f∈A | in₁ d~f with trans (active-uniq d f f∈A d~f) (sym (active-uniq d d d∈A ~-refl))
+  A⊆A″ f f∈A | in₁ d~f with active-~-impl-≡ d∈A f∈A d~f
   A⊆A″ .d  _ | in₁ d~f | refl = in₂ refl
   A⊆A″ f f∈A | in₂ d≁f with max(SessionPast(d)) ∵ d∈CGB
   A⊆A″ f f∈A | in₂ d≁f | (c , ((c<d , c~d) , c-max)) = in₁ (d≁f , (in₁ ((λ c~f → d≁f (~-trans (~-sym c~d) c~f)) , f∈A)))
@@ -271,3 +271,58 @@ from-to {D} {H} d .d d∈CGB ((d∈A , _) , d-max) e∈FT′ | refl = H=H″ whe
   H=H″ : (H ≣ H″)
   H=H″ = NH-CONG H H″ A⊆A″ A″⊆A REFL REFL REFL
 
+
+to-from : ∀ {D} {H : NavigationHistory(D)} d e e∈CGB →
+  (d ∈ FwdTarget(H)) →
+  (e ∈ BackTarget(H traverse-to d)) →
+  (H ≣ ((H traverse-to d) traverse-from e ∵ e∈CGB))
+to-from {D} {H} d e e∈CGB ((a , (a∈A , (a<d , a~d))) , d-min) e∈BT′ with lemma e∈BT′ | max(SessionPast(e)) ∵ e∈CGB where
+
+  H′ = (H traverse-to d)
+
+  open NavigationHistory H
+  open NavigationHistory H′ using () renaming (BackTarget to BackTarget′)
+   
+  lemma : (e ∈ BackTarget′) → (d ≡ e)
+  lemma ((in₁ (d≁e , e∈A) , (b , (b<e , b~e))) , e-max) = ≤-asym d≤e e≤d where
+
+    d≤e : (d ≤ e)
+    d≤e = e-max d (in₂ refl , (a , (a<d , a~d)))
+
+    e≤d : (e ≤ d)
+    e≤d = PATCH a∈A e∈A a~d b~e a<d b<e
+    
+  lemma ((in₂ d≡e , _) , _) = d≡e
+
+to-from {D} {H} d .d d∈CGB ((a , (a∈A , (a<d , a~d))) , d-min) (_ , d-max) | refl | (c , ((c<d , c~d) , c-max)) with ≤-asym a≤c c≤a where
+
+  open NavigationHistory H
+
+  c≤a : (c ≤ a)
+  c≤a with ≤-total c a
+  c≤a | in₁ c≤a = c≤a
+  c≤a | in₂ a<c = contradiction (<-impl-≱ (<-trans-≤ c<d (d-min c (a , (a∈A , (a<c , (~-trans a~d (~-sym c~d))))))) ≤-refl)
+  
+  a≤c : (a ≤ c)
+  a≤c = c-max a (a<d , a~d)
+
+to-from {D} {H} d .d d∈CGB ((a , (a∈A , (a<d , a~d))) , d-min) (_ , d-max) | refl | (.a , ((_ , _) , a-max)) | refl = H=H″ where
+
+  H′ = (H traverse-to d)
+  H″ = (H′ traverse-to a)
+  
+  open NavigationHistory H
+  open NavigationHistory H″ using () renaming (A to A″)
+
+  A⊆A″ : (A ⊆ A″)
+  A⊆A″ f f∈A with a ~? f
+  A⊆A″ f f∈A | in₁ a~f = in₂ (active-~-impl-≡ a∈A f∈A (~-trans (~-trans a~d (~-sym a~d)) a~f))
+  A⊆A″ f f∈A | in₂ a≁f = in₁ (a≁f , (in₁ ((λ d~f → a≁f (~-trans a~d d~f)) , f∈A)))
+  
+  A″⊆A : (A″ ⊆ A)
+  A″⊆A f  (in₁ (_ , in₁ (_ , f∈A))) = f∈A
+  A″⊆A .d (in₁ (a≁d , in₂ refl)) = contradiction (a≁d a~d)
+  A″⊆A .a (in₂ refl) = a∈A
+
+  H=H″ : (H ≣ H″)
+  H=H″ = NH-CONG H H″ A⊆A″ A″⊆A REFL REFL REFL

@@ -31,6 +31,9 @@ record NavigationHistory(D : Set) : Set₁ where
 
   ≲-impl-~ : ∀ {d e} → (d ≲ e) → (d ~ e)
   ≲-impl-~ (d<e , d~e) = d~e
+
+  active-~-impl-≡ : ∀ {d e} → (d ∈ A) → (e ∈ A) → (d ~ e) → (d ≡ e)
+  active-~-impl-≡ {d} {e} d∈A e∈A d~e = trans (active-uniq d d d∈A ~-refl) (sym (active-uniq d e e∈A d~e))
   
   SessionPast : D → Subset(D)
   SessionPast(d) e = (e ≲ d)

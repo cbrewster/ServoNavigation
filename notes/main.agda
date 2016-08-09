@@ -114,7 +114,7 @@ FwdTheorem {D} {H} {._} {H″} {δ = δ} {δ′} (fwd (d ∷ ds) d∷ds∈FT) H�
     es∈BT₀ = BT-tl {H = H₁} e e∈CGB es e∷es∈BT₁
 
     H=H₀ : H ≣ H₀
-    H=H₀ = {!!}
+    H=H₀ = to-from d e e∈CGB d∈FT e∈BT₁
     
     H₀-to-Hₙ : H₀ traverses-by (-ve n) to Hₙ
     H₀-to-Hₙ = back es es∈CGB es∈BT₀
