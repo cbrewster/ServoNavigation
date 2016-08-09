@@ -1,6 +1,3 @@
--- Slightly annoyingly this doesn't pass the termination checker.
-{-# OPTIONS --no-termination-check #-}
-
 module main where
 
 open import prelude
@@ -11,16 +8,6 @@ BackTheorem : ∀ {D} {H H′ H″ : NavigationHistory(D)} {δ δ′} →
   (H traverses-by (-ve δ) to H′) → 
   (H′ traverses-by δ′ to H″) → 
   (H traverses-by (-ve δ + δ′) to H″)
-
-FwdTheorem : ∀ {D} {H H′ H″ : NavigationHistory(D)} {δ δ′} →
-  (H traverses-by (succ δ) to H′) → 
-  (H′ traverses-by δ′ to H″) → 
-  (H traverses-by (succ δ + δ′) to H″)
-
-Theorem : ∀ {D} {H H′ H″ : NavigationHistory(D)} {δ δ′} →
-  (H traverses-by δ to H′) → 
-  (H′ traverses-by δ′ to H″) → 
-  (H traverses-by (δ + δ′) to H″)
 
 BackTheorem {δ = zero} (back nil ds∈CGB ds∈BT) H′-to-H″ = H′-to-H″
 BackTheorem {D} {H} {._} {H″} {δ = succ δ} {δ′} (back (d ∷ ds) (d∈CGB , ds∈CGB) d∷ds∈BT) H′-to-H″ = H-to-H″ where
@@ -81,19 +68,18 @@ BackTheorem {D} {H} {._} {H″} {δ = succ δ} {δ′} (back (d ∷ ds) (d∈CGB
   H-to-H″ : H traverses-by (-ve (succ δ) + δ′) to H″
   H-to-H″ = Lemma (-ve δ + δ′) H₁-to-H″
   
-FwdTheorem {D} {H} {._} {H″} {δ = δ} {δ′} (fwd (d ∷ ds) d∷ds∈FT) H′-to-H″ = H-to-H″ where
+FwdTheorem : ∀ {D} {H H′ H″ : NavigationHistory(D)} {δ δ′} →
+  (H traverses-by (succ δ) to H′) → 
+  (H′ traverses-by δ′ to H″) → 
+  (H traverses-by (succ δ + δ′) to H″)
+
+FwdTheorem {D} {H} {._} {H″} {δ = δ} {δ′} (fwd (d ∷ ds) d∷ds∈FT) H′-to-H″ with Lemma where
 
   H₁ = (H traverse-to d)
   H′ = (H₁ traverses-to ds)
   
   d∈FT : (d ∈ FwdTarget(H))
   d∈FT = FT-hd {H = H} d ds d∷ds∈FT
-
-  ds∈FT₁ : (ds ∈ FwdTarget*(H₁))
-  ds∈FT₁ = FT-tl {H = H} d ds d∷ds∈FT
-
-  H₁-to-H″ : H₁ traverses-by (+ve δ + δ′) to H″
-  H₁-to-H″ = Theorem (fwd? ds ds∈FT₁) H′-to-H″
 
   Lemma : ∀ {H″} n →
     (H₁ traverses-by n to H″) →
@@ -122,9 +108,25 @@ FwdTheorem {D} {H} {._} {H″} {δ = δ} {δ′} (fwd (d ∷ ds) d∷ds∈FT) H�
     H-to-Hₙ : H traverses-by (-ve n) to Hₙ
     H-to-Hₙ = SUBST (λ ∙ → ∙ traverses-by (-ve n) to Hₙ) H=H₀ H₀-to-Hₙ
 
-  H-to-H″ : H traverses-by succ δ + δ′ to H″
-  H-to-H″ = subst (λ ∙ → H traverses-by ∙ to H″) (succ-dist-+ δ δ′) (Lemma (+ve δ + δ′) H₁-to-H″)
+FwdTheorem {D} {H} {._} {H″} {δ = zero} {δ′} (fwd (d ∷ nil) d∷nil∈FT) H′-to-H″ | Lemma = Lemma δ′ H′-to-H″
+
+FwdTheorem {D} {H} {._} {H″} {δ = succ δ} {δ′} (fwd (d ∷ ds) d∷ds∈FT) H′-to-H″ | Lemma = H-to-H″ where
+
+  H₁ = (H traverse-to d)
+
+  ds∈FT₁ : (ds ∈ FwdTarget*(H₁))
+  ds∈FT₁ = FT-tl {H = H} d ds d∷ds∈FT
+
+  H₁-to-H″ : H₁ traverses-by (succ δ + δ′) to H″
+  H₁-to-H″ = FwdTheorem (fwd ds ds∈FT₁) H′-to-H″
+
+  H-to-H″ : H traverses-by sucz (succ δ + δ′) to H″
+  H-to-H″ = subst (λ ∙ → H traverses-by ∙ to H″) (succ-dist-+ (succ δ) δ′) (Lemma (succ δ + δ′) H₁-to-H″)
+
+Theorem : ∀ {D} {H H′ H″ : NavigationHistory(D)} {δ δ′} →
+  (H traverses-by δ to H′) → 
+  (H′ traverses-by δ′ to H″) → 
+  (H traverses-by (δ + δ′) to H″)
 
 Theorem {δ = succ δ} = FwdTheorem
-
 Theorem {δ = -ve δ} = BackTheorem
