@@ -118,6 +118,12 @@ BT-cons {D} {H} d d∈CGB ds ((d∈A , _) , d-max) ((ds↓ , ds∈JSP′∩CGB) 
     es≤ds : es ≤* ds
     es≤ds = ds-max es (es↓ , All-resp-⊆ lemma es (All-resp-∩ es (es<d , es∈A∪JSP∩CGB)))
 
+fwd? : ∀ {D} {H : NavigationHistory(D)} {δ} (ds : D ^ δ) →
+  (ds ∈ FwdTarget*(H)) →
+  (H traverses-by (+ve δ) to (H traverses-to ds))
+fwd? {D} {H} {δ = zero} nil nil∈FT = back nil tt (BT-nil {H = H})
+fwd? {D} {H} {δ = succ δ} ds ds∈FT = fwd ds ds∈FT
+
 FT-hd : ∀ {D} {H : NavigationHistory(D)} {n} d (ds : D ^ n) →
   ((d ∷ ds) ∈ FwdTarget*(H)) →
   (d ∈ FwdTarget(H))
@@ -170,7 +176,60 @@ FT-tl {D} {H} d ds (((d<ds , ds↑) , ((a , (a∈A , (a<d , a~d))) , ds∈JSF)) 
     es∈JSF = All-resp-⊆ lemma″ es es∈JSF′
     
   ds-min es (es↑ , es∈JSF′) | (d≤d , ds≤es) = ds≤es
+  
+FT-nil :  ∀ {D} {H : NavigationHistory(D)} →
+  (nil ∈ FwdTarget*(H))
+FT-nil = ((tt , tt) , λ { nil (tt , tt) → tt })
 
+FT-cons : ∀ {D} {H : NavigationHistory(D)} {n} d (ds : D ^ n) →
+  (d ∈ FwdTarget(H)) →
+  (ds ∈ FwdTarget*(H traverse-to d)) →
+  ((d ∷ ds) ∈ FwdTarget*(H))
+FT-cons {D} {H} d ds ((a , (a∈A , (a<d , a~d))) , d-min) ((ds↑ , ds∈JSF′) , ds-min) = (((d<ds , ds↑) , ((a , (a∈A , (a<d , a~d))) , ds∈JSF)) , d∷ds-min) where
+
+  H′ = (H traverse-to d)
+
+  open NavigationHistory H
+  open NavigationHistory H′ using () renaming (JointSessionFuture to JointSessionFuture′)
+
+  lemma : ((Future(d) ∩ JointSessionFuture) ⊆ JointSessionFuture′)
+  lemma e (d<e , (b , (b∈A , (b<e , b~e)))) with d ~? b
+  lemma e (d<e , (b , (b∈A , (b<e , b~e)))) | in₁ d~b = (d , (in₂ refl , (d<e , (~-trans d~b b~e))))
+  lemma e (d<e , (b , (b∈A , (b<e , b~e)))) | in₂ d≁b = (b , (in₁ (d≁b , b∈A) , (b<e , b~e)))
+
+  lemma′ : (JointSessionFuture′ ⊆ Future(d))
+  lemma′ e (b  , (in₁ (d≁b , b∈A) , (b<e , b~e))) with ≤-total e d 
+  lemma′ e (b  , (in₁ (d≁b , b∈A) , (b<e , b~e))) | in₁ e≤d with d-min e (b , (b∈A , (b<e , b~e)))
+  lemma′ e (b  , (in₁ (d≁b , b∈A) , (b<e , b~e))) | in₁ e≤d | d≤e = contradiction (d≁b (~-trans (≡-impl-~ (≤-asym d≤e e≤d)) (~-sym b~e)))
+  lemma′ e (b  , (in₁ (d≁b , b∈A) , (b<e , b~e))) | in₂ d<e = d<e
+  lemma′ e (.d , (in₂ refl        , (d<e , d~e))) = d<e
+
+  lemma″ : (JointSessionFuture′ ⊆ JointSessionFuture)
+  lemma″ e (b  , (in₁ (d≁b , b∈A) , (b<e , b~e))) = (b , (b∈A , (b<e , b~e)))
+  lemma″ e (.d , (in₂ refl        , (d<e , d~e))) = (a , (a∈A , (<-trans a<d d<e , ~-trans a~d d~e)))
+
+  d<ds : ds ∈ All(Future(d))
+  d<ds = All-resp-⊆ lemma′ ds ds∈JSF′
+
+  ds∈JSF : ds ∈ All(JointSessionFuture)
+  ds∈JSF = All-resp-⊆ lemma″ ds ds∈JSF′
+  
+  d∷ds-min : ∀ es → (es ∈ (Increasing ∩ All(JointSessionFuture))) → ((d ∷ ds) ≤* es)
+  d∷ds-min (e ∷ es) ((e<es , es↑) , (e∈JSF , es∈JSF)) = (d≤e , ds≤es) where
+
+    d≤e : (d ≤ e)
+    d≤e = d-min e e∈JSF
+
+    d<es : es ∈ All(Future(d))
+    d<es = All-resp-⊆ (λ f → ≤-trans-< d≤e) es e<es
+    
+    es∈JSF′ : (es ∈ All(JointSessionFuture′))
+    es∈JSF′ = All-resp-⊆ lemma es (All-resp-∩ es (d<es , es∈JSF))
+    
+    ds≤es : (ds ≤* es)
+    ds≤es = ds-min es (es↑ , es∈JSF′)
+
+    
 from-to : ∀ {D} {H : NavigationHistory(D)} d e d∈CGB →
   (d ∈ BackTarget(H)) →
   (e ∈ FwdTarget(H traverse-from d ∵ d∈CGB)) →

@@ -25,6 +25,10 @@ data ℤ : Set where
   succ : ℕ → ℤ
   -ve : ℕ → ℤ
 
++ve : ℕ → ℤ
++ve zero = -ve zero
++ve (succ n) = (succ n)
+
 sucz : ℤ → ℤ
 sucz (succ x) = succ (succ x)
 sucz (-ve zero) = succ zero
@@ -71,6 +75,10 @@ SUBST : ∀ {X L R} (P : X → Set) →
   (P R) →
   (P L)
 SUBST P REFL p = p
+
+succ-dist-+ : ∀ m n → ((succ m + n) ≡ sucz (+ve m + n))
+succ-dist-+ zero     n = refl
+succ-dist-+ (succ m) n = refl
 
 record ⊤ : Set where
   constructor tt

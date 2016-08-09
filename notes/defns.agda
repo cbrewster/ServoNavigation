@@ -120,4 +120,3 @@ _traverses-from_∵_ : ∀ {D n} (H : NavigationHistory(D)) (ds : D ^ n) →
 data _traverses-by_to_ {D} (H : NavigationHistory(D)) : ℤ → (H : NavigationHistory(D)) → Set where
   fwd : ∀ {δ} (ds : D ^ (succ δ)) → (ds ∈ FwdTarget*(H)) → (H traverses-by (succ δ) to (H traverses-to ds))
   back : ∀ {δ} (ds : D ^ δ) ds∈CGB → (ds ∈ BackTarget*(H)) → (H traverses-by (-ve δ) to (H traverses-from ds ∵ ds∈CGB))
-
