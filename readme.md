@@ -1,4 +1,8 @@
 # Servo Navigation Proposal
+
+# This is out of date!
+Read the ongoing research in the [notes](notes/notes.pdf).
+
 ### Terminology
  - **Constellation**: The thread that controls a collection of related web content. This could be thought of as an owner of a single tab in a tabbed web browser; it encapsulates session history, knows about all frames in a frame tree, and is the owner of the pipeline for each contained frame. (See [Servo Glossary](https://github.com/servo/servo/blob/master/docs/glossary.md))
 
