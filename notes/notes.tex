@@ -2,7 +2,7 @@
 
 \title{A model of navigation history}
 \author{Connor G. Brewster \and Alan Jeffrey}
-\date{DRAFT of 2016-06-24}
+\date{DRAFT of 2016-08-09}
 \indicia{
   \includegraphics[height=4.5ex]{images/by}
   \begin{tabular}[b]{@{}l}%
@@ -43,10 +43,13 @@
 \newcommand{\cDoc}{f}
 \newcommand{\st}{\mathbin.}
 \newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{conjecture}{Conjecture}
 \newtheorem{goal}{Goal}
 \newtheorem{patch}{Patch}
 \newtheorem{counterexample}{Counterexample}
 \newtheorem{experiment}{Experiment}
+\newcommand{\QED}{\hfill$\Box$}
 
 \tikzstyle{doc} = [draw=black, fill=blue!10, circle, font={\normalfont\sffamily}]
 \tikzstyle{fully} = [draw=red, thick]
@@ -59,23 +62,21 @@
 
 \subparagraph{Abstact:}
 Navigation has been a core component of the web since its inception:
-users and scripts can follow hyperlinks, or can go back or forwards
-through the session history. Despite its long existence, navigation
-history has no formal model or properties. In this paper, we present a
-formal model aligned with the \textsc{whatwg} specification of navigation
+users and scripts can follow hyperlinks, and can go back or forwards
+through the navigation history. In this paper, we present a formal
+model aligned with the \textsc{whatwg} specification of navigation
 history, and investigate its properties. The fundamental property of
-navigation history is that traversing the history by $\delta$
-then by $\delta'$ should be the same as traversing by
-$\delta+\delta'$. In particular, traversing by $+1$ (forward) then by
-$-1$ (back) is the same as traversing by $0$ (doing nothing). We show
-that the specification-aligned model does not satisfy this property,
-by exhibiting a series of counter-examples, which motivate three
-patches to the model. The patched model is homomorphic. We present a
-series of experiments, showing that browsers are inconsistent in their
-implementation of navigation history, but that their behaviour is
-closer to the patched model than to the specification-aligned
-model. We propose patches to the specification to align it with the
-homomorphic model.
+navigation history is that traversing the history by $\delta$ then by
+$\delta'$ should be the same as traversing by $\delta+\delta'$. In
+particular, traversing by $+1$ (forward) then by $-1$ (back) is the
+same as traversing by $0$ (doing nothing). We show that the
+specification-aligned model does not satisfy this property, by
+exhibiting a series of counter-examples, which motivate four patches
+to the model. We present a series of experiments, showing that
+browsers are inconsistent in their implementation of navigation
+history, but that their behaviour is closer to the patched model than
+to the specification-aligned model. We propose patches to the
+specification to align it with the patched model.
 
 \subparagraph{ACM Classification:}
 D.2.1 Requirements/Specifications.
@@ -90,15 +91,18 @@ Web browsers.
 \section{Introduction}
 
 Navigation has been a core component of the web since its inception:
-users and scripts can follow hyperlinks, or can go back or forwards
-through the session history. Users are exposed to this functionality
+users and scripts can follow hyperlinks, and can go back or forwards
+through the navigation history. Users are exposed to this functionality
 through following hyperlinks, and by the forward and back buttons.
 Scripts have many ways of accessing session history, via the
 navigation API~\cite[\S7.7]{whatwg} and the \verb|element.click()| method.
 
-Despite its long existence, navigation history has no formal model or
-properties. The specification of the navigation API is informal, and
-has complex dependencies on the rest of the HTML
+% TODO: add detail to citations, cite Harel.
+Prior formalizations of navigation history
+include~\cite{HH:2006,Haydar:2004,HPS:2004,LHYT:2000,WP:2003}, which
+predate and are not aligned with the \textsc{whatwg}
+specification~\cite{whatwg}.  The specification of the navigation API
+is informal, and has complex dependencies on the rest of the HTML
 specification~\cite{whatwg}. There is little discussion of the goals
 of the API, and an unclear alignment with browser implementations.
 
@@ -109,7 +113,8 @@ starting point is that there is a total order of
   We are eliding some of the technical details of the specification here,
   in particular we are conflatating a \emph{browsing context}
   with the document it contains, and we are ignoring issues around
-  document loading and unloading.
+  document loading and unloading, and around the current entry of the joint
+  session history.
 }, one of which is \emph{active}, for example:
 \[\begin{tikzpicture}
   \node[doc](0) at (0,0){0};
@@ -128,12 +133,12 @@ the back button:
   \node[draw,dotted,fit=(0)(1)(2)] {};
 \end{tikzpicture}\]
 The user can also \emph{navigate}, which replaces any document
-after the currently active document by a fresh document:
+after the currently active document by a fresh active document:
 \[\begin{tikzpicture}
   \node[doc](0) at (0,0){0};
   \node[doc](1) at (1,0){1};
-  \node[doc,jshactive,fully](4) at (4,0){4};
-  \node[draw,dotted,fit=(0)(1)(4)] {};
+  \node[doc,jshactive,fully](3) at (3,0){3};
+  \node[draw,dotted,fit=(0)(1)(3)] {};
 \end{tikzpicture}\]
 Users can also traverse the history by more than one document
 at a time, for example by using a pull-down menu from the back
@@ -143,24 +148,15 @@ to get:
 \[\begin{tikzpicture}
   \node[doc,jshactive,fully](0) at (0,0){0};
   \node[doc](1) at (1,0){1};
-  \node[doc](4) at (4,0){4};
-  \node[draw,dotted,fit=(0)(1)(4)] {};
+  \node[doc](3) at (3,0){3};
+  \node[draw,dotted,fit=(0)(1)(3)] {};
 \end{tikzpicture}\]
 We formalize the notions of traversal and navigation in
-\S\ref{sec:model}, and show that they satisfy two pleasant
-properties:
-\begin{itemize}
+\S\ref{sec:model}, and show the \emph{fundamental property of traversal}:
+that traversing by $\delta$ then by $\delta'$
+is the same as traversing by $\delta+\delta'$.
 
-\item \emph{traverse-then-traverse}:
-  traversing by $\delta$ then by $\delta'$
-  is the same as traversing by $\delta+\delta'$.
-
-\item \emph{navigate-then-traverse}:
-  navigating then traversing by $-1$
-  has the original active document.
-
-\end{itemize}
-Thus far, the model is refreshingly simple, and corresponds well to
+So far, the model is refreshingly simple, and corresponds well to
 the specification and to browser implmentations. Where the problems
 arise is in the \emph{hierarchical} nature of documents. HTML
 documents can contain \verb|iframe| elements, which
@@ -258,9 +254,9 @@ In this paper, we address these:
 \item \S\ref{sec:model} provides a formal model of navigation history,
   which is intended to align with the specification. We show, through
   a series of examples, that it does not satisfy the
-  traverse-then-traverse property, and give patches to the model for
+  fundamental property, and give patches to the model for
   each example. The final model does satisfy the
-  traverse-then-traverse property.
+  fundamental property.
 
 \item \S\ref{sec:experiments} investigates how well the patched
   model aligns with existing browser implementations. We show
@@ -280,7 +276,7 @@ In this section, we present our formal model of navigation history.
 tree and total order, and may be skipped by most readers. The model,
 together with some examples, is given in \S\ref{sec:defns}. In
 \S\ref{sec:properties} we define the fundamental property of
-navigtion history, show that the model does \emph{not} satisfy
+traversal, show that the model does \emph{not} satisfy
 it, but can be patched to do so.
 
 \subsection{Preliminaries}
@@ -289,7 +285,7 @@ it, but can be patched to do so.
 A \emph{directed graph} $G=(\Verts,{\parentOf})$ consists of:
 \begin{itemize}
 \item a set $\Verts$ (the \emph{vertices}), and
-\item a relation ${\parentOf} \subseteq (\Verts\times\Verts)$
+\item a relation ${\parentOf} \subseteq (\Verts\times\Verts)$ (the \emph{edges}).
 \end{itemize}
 The \emph{transitive closure} of $\parentOf$ is defined as $\aVert\parentOf^+\aVert'$ whenever
 there exists $\aVert_0,\ldots,\aVert_n$ such that:
@@ -305,16 +301,21 @@ A \emph{forest} is a directed graph where:
 \end{itemize}
 A \emph{root vertex} of a forest is a vertex $\aVert$ such that there is no $\bVert\parentOf\aVert$.
 A \emph{tree} is a forest with a unique root vertex.
-A \emph{partial order} is a directed graph $(\Verts, {\le})$ such that:
+A \emph{preorder} is a directed graph $(\Verts, {\le})$ such that:
 \begin{itemize}
 \item every $\aVert$ has $\aVert\le\aVert$ (\emph{reflexivity}), and
 \item if $\aVert\le\aVert'\le\aVert''$ then $\aVert\le\aVert''$ (\emph{transitivity}).
+\end{itemize}
+A \emph{partial order} is a preorder such that:
+\begin{itemize}
+\item for every $\aVert$ and $\aVert'$, if $\aVert\le\aVert'$ and $\aVert'\le\aVert$ then $\aVert=\aVert'$
+  (\emph{antisymmetry}).
 \end{itemize}
 A \emph{total order} is a partial order such that:
 \begin{itemize}
 \item for every $\aVert$ and $\aVert'$, either $\aVert\le\aVert'$ or $\aVert\ge\aVert'$ (\emph{totality}).
 \end{itemize}
-A \emph{equivalence} is a partial order $(\Verts,{\sim})$ such that:
+A \emph{equivalence} is a preorder $(\Verts,{\sim})$ such that:
 \begin{itemize}
 \item if $\aVert\sim\aVert'$ then $\aVert'\sim\aVert$ (\emph{symmetry}).
 \end{itemize}
@@ -322,14 +323,20 @@ A \emph{equivalence} is a partial order $(\Verts,{\sim})$ such that:
 \subsection{Definitions}
 \label{sec:defns}
 
+We can now formalize our model of navigation history, together with
+the operations of navigation and traversal. This formalizes the
+navigation history specification~\cite{whatwg}, and has a pleasant
+diagramatic presentation, but as we shall see in
+\S\ref{sec:properties}, it has unexpected properties.
+
 \begin{definition}[Navigation history]
 A \emph{navigation history} $\aNH=(\Docs,\Active,{\parentOf},{\leChron},{\eqSess})$ consists of:
 \begin{itemize}
-\item a set $\Docs$ (the \emph{documents}),
+\item a finite set $\Docs$ (the \emph{documents}),
 \item a subset $\Active \subseteq \Docs$ (the \emph{active} documents),
-\item a forest $(\Docs,{\parentOf})$ (the \emph{document hierarchy}),
-\item a total order $(\Docs,{\leChron})$ (the \emph{chronological order}), and
-\item an equivalence relation $(\Docs,{\eqSess})$ (the \emph{same-session equivalence}).
+\item a forest $(\Docs,{\parentOf})$ (the \emph{child} relationship),
+\item a total order $(\Docs,{\leChron})$ (the \emph{chronological} order), and
+\item an equivalence relation $(\Docs,{\eqSess})$ (the \emph{same-session} equivalence).
 \end{itemize}
 such that:
 \begin{itemize}
@@ -337,12 +344,42 @@ such that:
 \item for every $\aDoc \parentOf \bDoc \eqSess \bDoc'$
   we have $\aDoc \parentOf \bDoc'$, and
 \item for every $\aDoc \parentOf \bDoc$, we have $\aDoc \leChron \bDoc$.
+  \QED
 \end{itemize}
 \end{definition}
-Define:
+We present such navigation histories diagramatically, using
+left-to-right position for chronological order, and grouping documents
+in the same session. Since documents in the same session must have the
+same parent, we only draw the document hierarchy for active children.
+For example the diagram:
+\[\begin{tikzpicture}
+  \node[doc,active,fully](0) at (0,0){0};
+  \node[doc,jshactive,fully](1) at (1,-1){1};
+  \node[doc](2) at (2,-2){2};
+  \node[doc,active,fully](3) at (3,0){3};
+  \node[doc,active,fully](4) at (4,-2){4};
+  \node[doc](5) at (5,-1){5};
+  \node[draw,dotted,fit=(0)] {};
+  \node[draw,dotted,fit=(1)(5)] {};
+  \node[draw,dotted,fit=(2)(4)] {};
+  \node[draw,dotted,fit=(3)] {};
+  \draw[->](0)--(1);
+  \draw[->](1)--(4);
+  \draw[->](0)--(3);
+\end{tikzpicture}\]
+represents:
+\[\begin{array}{l}
+  D = \{ 0,1,2,3,4,5 \} \\[\jot]
+  A = \{ 0,1,3,4 \} \\[\jot]
+  0 \parentOf 1 \quad 0 \parentOf 3 \quad 0 \parentOf 5 \quad 1 \parentOf 2 \quad 1 \parentOf 4 \\[\jot]
+  0 \leChron 1 \leChron 2 \leChron 3 \leChron 4 \leChron 5 \\[\jot]
+  1 \eqSess 5 \quad 2 \eqSess 4
+\end{array}\]
+In such a navigation history, we define:
 \begin{itemize}
 \item $\rootDoc$ is the unique active root document,
-\item $\aDoc \parentOfActive \bDoc$ when $\aDoc \parentOf \bDoc$ and $\bDoc \in \Active$,
+\item $\aDoc \parentOfActive \bDoc$ when $\aDoc \parentOf \bDoc$ and $\bDoc \in \Active$
+  (the \emph{active child} relationship),
 \item $\FullyActive = \{ \aDoc \mid \rootDoc \parentOfActive^* \aDoc \}$
   (the \emph{fully active} documents),
 \item $\aDoc \ltSess \bDoc$ whenever $\aDoc \eqSess \bDoc$ and $\aDoc \ltChron \bDoc$,
@@ -351,18 +388,32 @@ Define:
 \item the \emph{joint session future} is $\{ \bDoc \mid \exists \aDoc \in \FullyActive \st \aDoc \ltSess \bDoc \}$,
 \item the \emph{joint session past} is $\{ \bDoc \mid \exists \aDoc \in \FullyActive \st \aDoc \gtSess \bDoc \}$,
 \end{itemize}
+These definitions are intended to align with the specification, for example
+\cite[7.7.2]{whatwg} has the definition:
+\begin{quote}
+  The \textbf{joint session history} of a top-level browsing context is the
+  union of all the session histories of all browsing contexts of all
+  the fully active \verb|Document| objects that share that top-level browsing
+  context, with all the entries that are current entries in their
+  respective session histories removed except for the current entry of
+  the joint session history.
+\end{quote}
+which (eliding the concept of ``current entry of the joint session history'')
+corresponds to the above definitions of joint session future and past.
+%
+We now consider how to formalize operations on navigation histories.
+staring with \emph{navigation}, which is triggered by following hyperlinks,
+or other actions which trigger document loading.
 
 \begin{definition}[Navigation]
-Define \emph{deleting $\aDoc$ from $\aNH$}, when $\aDoc\not\in\FullyActive$, to be $\aNH'$ where:
+Define \emph{deleting $\aDoc$ from $\aNH$}, when $\aDoc\not\in\FullyActive$,
+to be $\aNH'=(\Docs',\Active,{\leChron},{\parentOf},{\eqSess})$ where:
 \begin{itemize}
-\item $\Docs' = \aDoc \setminus \{ \bDoc \mid \aDoc\parentOf^* \bDoc \}$,
-\item $\bDoc\in\Active'$ whenever $\bDoc\in\Active$,
-\item $\bDoc\leChron'\cDoc$ whenever $\bDoc\leChron\cDoc$,
-\item $\bDoc\parentOf'\cDoc$ whenever $\bDoc\parentOf\cDoc$, and
-\item $\bDoc\eqSess'\cDoc$ whenever $\bDoc\eqSess\cDoc$.
+\item $\Docs' = \Docs \setminus \{ \bDoc \mid \aDoc\parentOf^* \bDoc \}$.
 \end{itemize}
 Define \emph{replacing $\aDoc$ by $\aDoc'$ in $\aNH$}, where $\aDoc\in\Active$ and
-$\aDoc'\notin\Docs$, to be $\aNH'$ where:
+$\aDoc'\notin\Docs$,
+to be $\aNH'=(\Docs',\Active',{\leChron'},{\parentOf'},{\eqSess'})$ where:
 \begin{itemize}
 \item $\Docs' = \Docs \cup \{\aDoc'\}$,
 \item $\bDoc \in \Active'$ whenever
@@ -375,55 +426,174 @@ $\aDoc'\notin\Docs$, to be $\aNH'$ where:
   $\bDoc \parentOf \aDoc$ and $\cDoc = \aDoc'$, and
 \item $\bDoc \eqSess' \cDoc$ whenever
   $\bDoc \eqSess \cDoc$, or
+  $\bDoc=\cDoc$, or
   $\bDoc \eqSess \aDoc$ and $\cDoc = \aDoc'$, or
   $\aDoc \eqSess \cDoc$ and $\bDoc = \aDoc'$.
 \end{itemize}
 Define \emph{navigating from $\aDoc$ to $\aDoc'$ in $\aNH$} to be the result of:
 \begin{itemize}
-\item deleting the session future of $\aDoc$, and
+\item deleting the session future of $\aDoc$, and then
 \item replacing $\aDoc$ by $\aDoc'$.
+  \QED
 \end{itemize}
 \end{definition}
-
+There are two parts to navigation from $\aDoc$ to $\aDoc'$: deleting the session
+future of $\aDoc$, followed by replacing $\aDoc$ by $\aDoc'$. For example,
+navigating from $1$ to $6$ in:
+\[\begin{tikzpicture}
+  \node[doc,active,fully](0) at (0,0){0};
+  \node[doc,jshactive,fully](1) at (1,-1){1};
+  \node[doc](2) at (2,-2){2};
+  \node[doc,active,fully](3) at (3,0){3};
+  \node[doc,active,fully](4) at (4,-2){4};
+  \node[doc](5) at (5,-1){5};
+  \node[draw,dotted,fit=(0)] {};
+  \node[draw,dotted,fit=(1)(5)] {};
+  \node[draw,dotted,fit=(2)(4)] {};
+  \node[draw,dotted,fit=(3)] {};
+  \draw[->](0)--(1);
+  \draw[->](1)--(4);
+  \draw[->](0)--(3);
+\end{tikzpicture}\]
+we first delete the session future of $1$ (which is $\{5\}$):
+\[\begin{tikzpicture}
+  \node[doc,active,fully](0) at (0,0){0};
+  \node[doc,jshactive,fully](1) at (1,-1){1};
+  \node[doc](2) at (2,-2){2};
+  \node[doc,active,fully](3) at (3,0){3};
+  \node[doc,active,fully](4) at (4,-2){4};
+  \node[draw,dotted,fit=(0)] {};
+  \node[draw,dotted,fit=(1)] {};
+  \node[draw,dotted,fit=(2)(4)] {};
+  \node[draw,dotted,fit=(3)] {};
+  \draw[->](0)--(1);
+  \draw[->](1)--(4);
+  \draw[->](0)--(3);
+\end{tikzpicture}\]
+then replace $1$ by $6$:
+\[\begin{tikzpicture}
+  \node[doc,active,fully](0) at (0,0){0};
+  \node[doc](1) at (1,-1){1};
+  \node[doc](2) at (2,-2){2};
+  \node[doc,active,fully](3) at (3,0){3};
+  \node[doc,active](4) at (4,-2){4};
+  \node[doc,jshactive,fully](6) at (6,-1){6};
+  \node[draw,dotted,fit=(0)] {};
+  \node[draw,dotted,fit=(1)(6)] {};
+  \node[draw,dotted,fit=(2)(4)] {};
+  \node[draw,dotted,fit=(3)] {};
+  \draw[->](0)--(6);
+  \draw[->](1)--(4);
+  \draw[->](0)--(3);
+\end{tikzpicture}\]
+We also define \emph{traversing the history}, which changes the active
+documents.
 \begin{definition}[Traversal]
-Define \emph{traversing the history to $\aDoc$ in $\aNH$} to be $\aNH'$ where:
+Define \emph{traversing the history to $\aDoc$ in $\aNH$}
+to be $\aNH'=(\Docs,\Active',{\leChron},{\parentOf},{\eqSess})$ where:
 \begin{itemize}
-\item $\Docs'$ is $\Docs$,
 \item $\bDoc\in\Active'$ whenever $\aDoc\not\eqSess\bDoc \in \Active$, or
-  $\aDoc=\bDoc$,
-\item $\bDoc\leChron'\cDoc$ whenever $\bDoc\leChron\cDoc$,
-\item $\bDoc\parentOf'\cDoc$ whenever $\bDoc\parentOf\cDoc$, and
-\item $\bDoc\eqSess'\cDoc$ whenever $\bDoc\eqSess\cDoc$.
+  $\aDoc=\bDoc$.
 \end{itemize}
 Define \emph{$\aNH$ traverses the history by $+\delta$ to $\aNH'$} when:
 \begin{itemize}
-\item the joint session future of $\aNH$ is $\aDoc_1 \gtChron \cdots \gtChron \aDoc_\delta \gtChron \cdots$,
+\item the joint session future of $\aNH$ is $\aDoc_1 \ltChron \cdots \ltChron \aDoc_\delta \ltChron \cdots$,
 \item $H$ traverses the history to $d_\delta$ in $H'$
 \end{itemize}
 Define \emph{$\aNH$ traverses the history by $-\delta$ to $\aNH'$} when:
 \begin{itemize}
-\item the joint session past of $\aNH$ is $\aDoc_1 \ltChron \cdots \ltChron \aDoc_\delta \ltChron \cdots$,
+\item the joint session past of $\aNH$ is $\aDoc_1 \gtChron \cdots \gtChron \aDoc_\delta \gtChron \cdots$,
 \item $H$ traverses the history to $d_\delta$ in $H'$
 \end{itemize}
 Define \emph{$\aNH$ traverses the history by $0$ to $\aNH'$} when $\aNH=\aNH'$.
 \end{definition}
+For example, to traverse the history by $-2$ in:
+\[\begin{tikzpicture}
+  \node[doc,active,fully](0) at (0,0){0};
+  \node[doc](1) at (1,-1){1};
+  \node[doc](2) at (2,-2){2};
+  \node[doc,active,fully](3) at (3,0){3};
+  \node[doc,active](4) at (4,-2){4};
+  \node[doc,jshactive,fully](6) at (6,-1){6};
+  \node[draw,dotted,fit=(0)] {};
+  \node[draw,dotted,fit=(1)(6)] {};
+  \node[draw,dotted,fit=(2)(4)] {};
+  \node[draw,dotted,fit=(3)] {};
+  \draw[->](0)--(6);
+  \draw[->](1)--(4);
+  \draw[->](0)--(3);
+\end{tikzpicture}\]
+we find the joint session past (which is $2 \gtChron 1$)
+and traverse the history to the second item (which is $1$)
+to arrive at:
+\[\begin{tikzpicture}
+  \node[doc,active,fully](0) at (0,0){0};
+  \node[doc,jshactive,fully](1) at (1,-1){1};
+  \node[doc](2) at (2,-2){2};
+  \node[doc,active,fully](3) at (3,0){3};
+  \node[doc,active,fully](4) at (4,-2){4};
+  \node[doc](6) at (6,-1){6};
+  \node[draw,dotted,fit=(0)] {};
+  \node[draw,dotted,fit=(1)(6)] {};
+  \node[draw,dotted,fit=(2)(4)] {};
+  \node[draw,dotted,fit=(3)] {};
+  \draw[->](0)--(1);
+  \draw[->](1)--(4);
+  \draw[->](0)--(3);
+\end{tikzpicture}\]
+These definitions are intended to formally capture the HTML
+specification, for example \cite[7.7.2]{whatwg} includes:
+\begin{quote}
+  To \textbf{traverse the history by a delta} $\delta$, the user agent
+  must append a task to this top-level browsing context's session
+  history traversal queue, the task consisting of running the
+  following steps:
+  \begin{enumerate}
+    
+  \item If the index of the current entry of the joint session history
+    plus $\delta$ is less than zero or greater than or equal to the
+    number of items in the joint session history, then abort these
+    steps.
+
+  \item Let \emph{specified entry} be the entry in the joint session
+    history whose index is the sum of $\delta$ and the index of the
+    current entry of the joint session history.
+
+  \item Let \emph{specified browsing context} be the browsing context
+    of the specified entry.
+
+  \item If the specified browsing context's active document's unload a
+    document algorithm is currently running, abort these steps.
+
+  \item Queue a task that consists of running the following
+    substeps [\dots]
+
+    \begin{itemize}
+
+    \item[3.] Traverse the history of the specified browsing context
+      to the specified entry.
+
+    \end{itemize}
+  \end{enumerate}
+\end{quote}
 
 \subsection{Properties}
 \label{sec:properties}
 
-[State some goals, e.g. go($\delta$);go($\delta'$) is the same as go($\delta+\delta'$),
-  navigate;go($-1$) has the same fully active documents as doing nothing,
-  session history can be implemented effeciently in memory...]
+We now consider the fundamental property of navigation history:
 
-[I suspect none of these are true of the current spec, can we find a model in which
-  they are true?]
-
-\begin{goal}
-\label{goal:homomorphism}
-  If $H$ traverses the history by $\delta$ to $H'$
+\begin{definition}[Fundamental property]
+\label{defn:fundamental}
+  $H$ satisfies the \emph{fundamental property of traversal} whenever
+  $H$ traverses the history by $\delta$ to $H'$
   and $H'$ traverses the history by $\delta'$ to $H''$
-  then $H$ traverses the history by $\delta+\delta'$ to $H''$.
-\end{goal}
+  implies $H$ traverses the history by $\delta+\delta'$ to $H''$.
+  \QED
+\end{definition}
+Unfortunately, navigation histories as specified do not always satisfy the fundamental property,
+due to ways individual session histories are combined into the joint session history.
+In this section, we give a series of counterexamples, and propose patches to
+the model to address each counterexample.
 
 \begin{counterexample}
   \label{counterexample:homomorphism1}
@@ -466,7 +636,7 @@ Define \emph{$\aNH$ traverses the history by $0$ to $\aNH'$} when $\aNH=\aNH'$.
     \draw[->](0)--(2);
     \draw[->](0)to[out=0,in=150](4);
   \end{tikzpicture}\]
-  but $H$ traverses the history $2$ to:
+  but $H$ traverses the history by $2$ to:
   \[\begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
     \node[doc,active,fully](1) at (1,-1){1};
@@ -479,13 +649,14 @@ Define \emph{$\aNH$ traverses the history by $0$ to $\aNH'$} when $\aNH=\aNH'$.
     \draw[->](0)--(1);
     \draw[->](0)to[out=0,in=150](4);
   \end{tikzpicture}\]
+  \QED
 \end{counterexample}
 %
 This counterexample is caused by the definition of `traverses the history by $\delta$' which
 only traverses one document's session history. Instead, we should traverse
 the history of all $\delta$ documents.
 
-\begin{patch}
+\begin{patch}[Traverse intermediaries]
 Define \emph{$\aNH$ traverses the history by $+\delta$ to $\aNH'$} when:
 \begin{itemize}
 \item the joint session future of $\aNH$ is $\aDoc_1 \ltChron \cdots \ltChron \aDoc_\delta \ltChron \cdots$,
@@ -497,10 +668,10 @@ Define \emph{$\aNH$ traverses the history by $-\delta$ to $\aNH'$} when:
 \item the joint session past of $\aNH$ is $\aDoc_1 \gtChron \cdots \gtChron \aDoc_\delta \gtChron \cdots$,
 \item there is some $\aNH=\aNH_0,\ldots,\aNH_\delta=\aNH'$, such that
 \item $H_{i-1}$ traverses the history to $d_i$ in $H_i$ for each $1 \le i \le \delta$.
+  \QED
 \end{itemize}
 \end{patch}
-Unfortunately, Goal~\ref{goal:homomorphism} is not satisfied,
-even with this patch.
+
 \begin{counterexample}
   Let $H$ be:
   \[\begin{tikzpicture}
@@ -516,7 +687,7 @@ even with this patch.
     \draw[->](0)--(1);
     \draw[->](2)--(3);
   \end{tikzpicture}\]
-  which moves forwards by $1$ to:
+  which traverses the history by $1$ to:
   \[\begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
     \node[doc](1) at (1,-1){1};
@@ -530,7 +701,7 @@ even with this patch.
     \draw[->](0)--(2);
     \draw[->](2)--(3);
   \end{tikzpicture}\]
-  which in turn moves forwards by $1$ to:
+  which in turn traverses the history by $1$ to:
   \[\begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
     \node[doc](1) at (1,-1){1};
@@ -544,7 +715,7 @@ even with this patch.
     \draw[->](0)--(2);
     \draw[->](2)--(4);
   \end{tikzpicture}\]
-  but $H$ goes forward by $2$ to:
+  but $H$ traverses the history by $2$ to:
   \[\begin{tikzpicture}
     \node[doc](0) at (0,0){0};
     \node[doc](1) at (1,-1){1};
@@ -558,34 +729,23 @@ even with this patch.
     \draw[->](0)--(2);
     \draw[->](2)--(3);
   \end{tikzpicture}\]
+  \QED
 \end{counterexample}
 The problem this time is that the definition of `joint session history' only includes
 the fully active documents, not all active documents.
 
-\begin{patch}
+\begin{patch}[Active joint session history]
 Define:
 \begin{itemize}
 \item the \emph{joint session future} is $\{ \bDoc \mid \exists \aDoc \in \Active \st \aDoc \ltSess \bDoc \}$, and
 \item the \emph{joint session past} is $\{ \bDoc \mid \exists \aDoc \in \Active \st \aDoc \gtSess \bDoc \}$.
+  \QED
 \end{itemize}
 \end{patch}
 
 
 \begin{counterexample}
   Let $H$ be:
-  %% \[\begin{tikzpicture}
-  %%   \node[doc,active,fully](0) at (0,0){0};
-  %%   \node[doc](1) at (1,-1){1};
-  %%   \node[doc](2) at (2,-2){2};
-  %%   \node[doc,active,fully](3) at (3,-2){3};
-  %%   \node[doc,jshactive,fully](4) at (4,-1){4};
-  %%   \node[draw,dotted,fit=(0)]{};
-  %%   \node[draw,dotted,fit=(1)(4)]{};
-  %%   \node[draw,dotted,fit=(2)(3)]{};
-  %%   \draw[->](0)--(4);
-  %%   \draw[->](0)to[out=-20,in=120](3);
-  %% \end{tikzpicture}\]
-  %% which traverses the history by $-1$ to:
   \[\begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
     \node[doc](1) at (1,-1){1};
@@ -624,25 +784,15 @@ Define:
     \draw[->](0)--(1);
     \draw[->](0)to[out=-20,in=120](3);
   \end{tikzpicture}\]
-  %% which traverses the history by $1$ to:
-  %% \[\begin{tikzpicture}
-  %%   \node[doc,active,fully](0) at (0,0){0};
-  %%   \node[doc](1) at (1,-1){1};
-  %%   \node[doc](2) at (2,-2){2};
-  %%   \node[doc,active,fully](3) at (3,-2){3};
-  %%   \node[doc,jshactive,fully](4) at (4,-1){4};
-  %%   \node[draw,dotted,fit=(0)]{};
-  %%   \node[draw,dotted,fit=(1)(4)]{};
-  %%   \node[draw,dotted,fit=(2)(3)]{};
-  %%   \draw[->](0)--(4);
-  %%   \draw[->](0)to[out=-20,in=120](3);
-  %% \end{tikzpicture}\]
   which is not the same as $H$.
+  \QED
 \end{counterexample}
+This counterexample is caused by an asymmetry in the definition
+of traversal: it is defined in terms of navigating \emph{to} a document
+$d$, and not navigating \emph{from} a document. We fix this
+by making the definition symmetric:
 
-[ASAJ: Not sure about this\dots]
-
-\begin{patch}
+\begin{patch}[Symmetric traversal]
 Define \emph{$\aNH$ traverses the history from $\aDoc'$} when there is some $\aDoc$ such that:
 \begin{itemize}
 \item $\aDoc\ltSess\aDoc'$,
@@ -654,990 +804,144 @@ Define \emph{$\aNH$ traverses the history by $-\delta$ to $\aNH'$} when:
 \item the joint session past and active documents of $\aNH$ is $\aDoc_1 \gtChron \cdots \gtChron \aDoc_\delta \gtChron \cdots$,
 \item there is some $\aNH=\aNH_0,\ldots,\aNH_\delta=\aNH'$, such that
 \item $H_{i-1}$ traverses the history from $d_i$ in $H_i$ for each $1 \le i \le \delta$.
+  \QED
 \end{itemize}
 \end{patch}
+For example, to traverse the history by $-1$ from:
+\[\begin{tikzpicture}
+\node[doc,active,fully](0) at (0,0){0};
+\node[doc](1) at (1,-1){1};
+\node[doc,jshactive,fully](2) at (2,-2){2};
+\node[doc](3) at (3,-2){3};
+\node[doc,active,fully](4) at (4,-1){4};
+\node[draw,dotted,fit=(0)]{};
+\node[draw,dotted,fit=(1)(4)]{};
+\node[draw,dotted,fit=(2)(3)]{};
+\draw[->](0)--(4);
+\draw[->](0)to[out=-20,in=90](2);
+\end{tikzpicture}\]
+we find the joint session past and active documents (which is $4 \gtChron 2 \gtChron 1 \gtChron 0$)
+and traverse the history from the first item (which is $4$)
+which is the same as traversing the history to $1$:
+\[\begin{tikzpicture}
+\node[doc,active,fully](0) at (0,0){0};
+\node[doc,jshactive,fully](1) at (1,-1){1};
+\node[doc,active,fully](2) at (2,-2){2};
+\node[doc](3) at (3,-2){3};
+\node[doc](4) at (4,-1){4};
+\node[draw,dotted,fit=(0)]{};
+\node[draw,dotted,fit=(1)(4)]{};
+\node[draw,dotted,fit=(2)(3)]{};
+\draw[->](0)--(1);
+\draw[->](0)to[out=-20,in=90](2);
+\end{tikzpicture}\]
 
-\begin{goal}
-  If $\aDoc$ in $\aNH$ navigates to $\aDoc'$ in $\aNH'$,
-  and $\aNH'$ traverses the history by $-1$ to $\aNH''$,
-  then $\FullyActive=\FullyActive''$.
-\end{goal}
+\begin{counterexample}
+\label{cex:not-well-formed}
+  Let $H$ be:
+  \[\begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc,active,fully](1) at (1,-1){1};
+    \node[doc](2) at (2,-2){2};
+    \node[doc](3) at (3,-1){3};
+    \node[doc,jshactive,fully](4) at (4,-2){4};
+    \node[draw,dotted,fit=(0)]{};
+    \node[draw,dotted,fit=(1)(3)]{};
+    \node[draw,dotted,fit=(2)(4)]{};
+    \draw[->](0)--(1);
+    \draw[->](1)--(4);
+  \end{tikzpicture}\]
+  which traverses the history by $-1$ to:
+  \[\begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc,active,fully](1) at (1,-1){1};
+    \node[doc,jshactive,fully](2) at (2,-2){2};
+    \node[doc](3) at (3,-1){3};
+    \node[doc ](4) at (4,-2){4};
+    \node[draw,dotted,fit=(0)]{};
+    \node[draw,dotted,fit=(1)(3)]{};
+    \node[draw,dotted,fit=(2)(4)]{};
+    \draw[->](0)--(1);
+    \draw[->](1)--(2);
+  \end{tikzpicture}\]
+  which traverses the history by $1$ to:
+  \[\begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc](1) at (1,-1){1};
+    \node[doc,active](2) at (2,-2){2};
+    \node[doc,jshactive,fully](3) at (3,-1){3};
+    \node[doc](4) at (4,-2){4};
+    \node[draw,dotted,fit=(0)]{};
+    \node[draw,dotted,fit=(1)(3)]{};
+    \node[draw,dotted,fit=(2)(4)]{};
+    \draw[->](0)--(3);
+    \draw[->](1)--(2);
+  \end{tikzpicture}\]
+  which is not the same as $H$.
+  \QED
+\end{counterexample}
+%
+The problem here is not the definition of `traversing by $\delta$', but the definition
+of navigation histories themselves. They allow for states such as $H$ from
+Counterexample~\ref{cex:not-well-formed}, which includes the problematic documents:
+\[\begin{tikzpicture}
+  \node[doc,active,fully](1) at (1,-1){1};
+  \node[doc](2) at (2,-2){2};
+  \node[doc](3) at (3,-1){3};
+  \node[doc,jshactive,fully](4) at (4,-2){4};
+  \node[draw,dotted,fit=(1)(3)]{};
+  \node[draw,dotted,fit=(2)(4)]{};
+\end{tikzpicture}\]
+There are similar problems with documents:
+\[\begin{tikzpicture}
+  \node[doc,active,fully](2) at (2,-1){2};
+  \node[doc](1) at (1,-2){1};
+  \node[doc](3) at (3,-1){3};
+  \node[doc,jshactive,fully](4) at (4,-2){4};
+  \node[draw,dotted,fit=(2)(3)]{};
+  \node[draw,dotted,fit=(1)(4)]{};
+\end{tikzpicture}\]
+and with documents:
+\[\begin{tikzpicture}
+  \node[doc,active,fully](1) at (1,-1){1};
+  \node[doc](3) at (3,-2){3};
+  \node[doc](2) at (2,-1){2};
+  \node[doc,jshactive,fully](4) at (4,-2){4};
+  \node[draw,dotted,fit=(1)(2)]{};
+  \node[draw,dotted,fit=(3)(4)]{};
+\end{tikzpicture}\]
+%
+It turns out that these are the only remaining cause of counterexamples,
+and we will call examples like this not \emph{well-formed}.
 
-%% \begin{counterexample}
-%%   \[\begin{tikzpicture}
-%%     \node[doc,active,fully](0) at (0,0){0};
-%%     \node[doc,jshactive,fully](1) at (1,-1){1};
-%%     \node[doc](2) at (2,0){2};
-%%     \node[draw,dotted,fit=(0)(2)] {};
-%%     \node[draw,dotted,fit=(1)]{};
-%%     \draw[->](0)--(1);
-%%   \end{tikzpicture}\]
-%%   navigates 1 to 3 in:
-%%   \[\begin{tikzpicture}
-%%     \node[doc,active,fully](0) at (0,0){0};
-%%     \node[doc](1) at (1,-1){1};
-%%     \node[doc](2) at (2,0){2};
-%%     \node[doc,jshactive,fully](3) at (3,-1){3};
-%%     \node[draw,dotted,fit=(0)(2)] {};
-%%     \node[draw,dotted,fit=(1)(3)]{};
-%%     \draw[->](0)--(3);
-%%   \end{tikzpicture}\]
-%%   which traverses the history by $-1$ to:
-%%   \[\begin{tikzpicture}
-%%     \node[doc](0) at (0,0){0};
-%%     \node[doc](1) at (1,-1){1};
-%%     \node[doc,jshactive,fully](2) at (2,0){2};
-%%     \node[doc,active](3) at (3,-1){3};
-%%     \node[draw,dotted,fit=(0)(2)] {};
-%%     \node[draw,dotted,fit=(1)(3)]{};
-%%     \draw[->](0)--(3);
-%%   \end{tikzpicture}\]
-%% \end{counterexample}
+\begin{definition}[Well-formed]
+  A navigation history is \emph{well formed} whenever
+  for any $a \ltSess b$ and $c \ltSess d$,
+  if $a \in \Active$ and $d \in \Active$ then $d \leChron b$.
+\end{definition}
+%
+With these patches, we can prove the fundamental property of traversal.
+
+\begin{theorem}
+\label{thm:fundamental}
+  For any well-formed navigation history $H$,
+  if $H$ traverses the history by $\delta$ to $H'$
+  and $H'$ traverses the history by $\delta'$ to $H''$
+  then $H$ traverses the history by $\delta+\delta'$ to $H''$.
+\end{theorem}
+\begin{proof}
+  Mechanically verified in Agda.
+  \QED
+\end{proof}
 
 \section{Experiments}
 \label{sec:experiments}
 
-[In this section various different navigation and traversal scenarios are tested in popular web browsers to see where they differ in behaviour from both the spec and each other.]
+In this section, we summarize our experiments to validate the conformance of browser
+implementations with respect to the \textsc{whatwg} specification, to our proposed
+changes, and to each other. The full details are in Appendix~\ref{app:experiments}.
 
-\begin{experiment}
-  In this experiment Goal~\ref{goal:homomorphism} is tested.
-  \begin{itemize}
-    \item \emph{$\aNH$ traverses the history by $-4$ to $\aNH'$}
-    \item \emph{$\aNH'$ traverses the history by $+4$ to $\aNH''$}
-  \end{itemize}
-  By Goal~\ref{goal:homomorphism}, these traversals should be the same thing as \emph{$\aNH$ traversing by $0$} which is a no-op; therefore, $\aNH = \aNH''$.
-
-  Firefox:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/1.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc,active,fully](1) at (1,-1){1};
-        \node[doc,jshactive,fully](2) at (2,-2){2};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)]{};
-        \node[draw,dotted,fit=(2)]{};
-        \draw[->](0)--(1);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Initial State}
-  \end{figure}
-
-  Navigate document $1$ to Page 2:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/2.png}
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc,active,fully](2) at (2,-2){2};
-        \node[doc,jshactive,fully](3) at (3,-1){3};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(3)]{};
-        \node[draw,dotted,fit=(2)]{};
-        \draw[->](0)--(3);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Navigate document $1$ to Page 2.}
-  \end{figure}
-
-  Navigate document $3$ to Page 3:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/3.png}
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc,active,fully](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,jshactive,fully](4) at (4,-1){4};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Navigate document $3$ to Page 3.}
-  \end{figure}
-
-  Navigate document $2$ to Page 2:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/4.png}
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,active,fully](4) at (4,-1){4};
-        \node[doc,jshactive,fully](5) at (5,-2){5};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(5)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=0,in=90](5);
-      \end{tikzpicture}
-    }
-    \caption{Navigate document $2$ to Page 2.}
-  \end{figure}
-
-  Navigate document $5$ to Page 3:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/5.png}
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,active,fully](4) at (4,-1){4};
-        \node[doc](5) at (5,-2){5};
-        \node[doc,jshactive,fully](6) at (6,-2){6};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(6)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=0,in=120](6);
-      \end{tikzpicture}
-    }
-    \caption{Navigate document $5$ to Page 3.}
-  \end{figure}
-
-  \emph{$\aNH$ traverses the history by $-4$ to $\aNH'$}:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/6.png}
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc,jshactive,fully](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,active,fully](4) at (4,-1){4};
-        \node[doc](5) at (5,-2){5};
-        \node[doc](6) at (6,-2){6};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(6)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Traversal by $-4$.}
-    \label{fig:traverseback4}
-  \end{figure}
-
-  This state is obviously wrong, as document $4$ should have traversed to document $1$.
-  This is similar to counterexample~\ref{counterexample:homomorphism1}.
-
-  \emph{$\aNH'$ traverses the history by $4$ to $\aNH''$}:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/7.png}
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,active,fully](4) at (4,-1){4};
-        \node[doc](5) at (5,-2){5};
-        \node[doc,jshactive,fully](6) at (6,-2){6};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(6)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=0,in=120](6);
-      \end{tikzpicture}
-    }
-    \caption{Traversal by $4$.}
-  \end{figure}
-
-  While this result does satisfy Goal~\ref{goal:homomorphism}, there are still some issues:
-  \begin{itemize}
-    \item Figure~\ref{fig:traverseback4} yields an incorrect traversal. [CGB: I believe this actually does break Goal~\ref{goal:homomorphism} as navigating by $-1$ four times should yield the correct state.]
-    \item It is impossible to get back to Page 1 on both Frames. [CGB: Looks to be a bug in FF, when holding down the back button, the list of pages to traverse to shows up. Clicking on the oldest item on the list does nothing and does not activate that item.]
-  \end{itemize}
-
-  Safari:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/safari/1.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc,active,fully](1) at (1,-1){1};
-        \node[doc,jshactive,fully](2) at (2,-2){2};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)]{};
-        \node[draw,dotted,fit=(2)]{};
-        \draw[->](0)--(1);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Initial State}
-  \end{figure}
-
-  Navigate document $1$ to Page 2:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/safari/2.png}
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc,active,fully](2) at (2,-2){2};
-        \node[doc,jshactive,fully](3) at (3,-1){3};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(3)]{};
-        \node[draw,dotted,fit=(2)]{};
-        \draw[->](0)--(3);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Navigate document $1$ to Page 2.}
-  \end{figure}
-
-  Navigate document $3$ to Page 3:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/safari/3.png}
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc,active,fully](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,jshactive,fully](4) at (4,-1){4};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Navigate document $3$ to Page 3.}
-  \end{figure}
-
-  Navigate document $2$ to Page 2:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/safari/4.png}
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,active,fully](4) at (4,-1){4};
-        \node[doc,jshactive,fully](5) at (5,-2){5};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(5)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=0,in=90](5);
-      \end{tikzpicture}
-    }
-    \caption{Navigate document $2$ to Page 2.}
-  \end{figure}
-
-  Navigate document $5$ to Page 3:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/safari/5.png}
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,active,fully](4) at (4,-1){4};
-        \node[doc](5) at (5,-2){5};
-        \node[doc,jshactive,fully](6) at (6,-2){6};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(6)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=0,in=120](6);
-      \end{tikzpicture}
-    }
-    \caption{Navigate document $5$ to Page 3.}
-  \end{figure}
-
-  \emph{$\aNH$ traverses the history by $-4$ to $\aNH'$}:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/safari/6.png}
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc,active,fully](1) at (1,-1){1};
-        \node[doc,jshactive,fully](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc](4) at (4,-1){4};
-        \node[doc](5) at (5,-2){5};
-        \node[doc](6) at (6,-2){6};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(6)]{};
-        \draw[->](0)--(1);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Traversal by $-4$.}
-  \end{figure}
-
-  \emph{$\aNH'$ traverses the history by $4$ to $\aNH''$}:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/safari/7.png}
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,active,fully](4) at (4,-1){4};
-        \node[doc](5) at (5,-2){5};
-        \node[doc,jshactive,fully](6) at (6,-2){6};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(6)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=0,in=120](6);
-      \end{tikzpicture}
-    }
-    \caption{Traversal by $4$.}
-  \end{figure}
-
-  These results in Safari satisfy Goal~\ref{goal:homomorphism}.
-
-  Chrome:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/chrome/1.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc,active,fully](1) at (1,-1){1};
-        \node[doc,jshactive,fully](2) at (2,-2){2};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)]{};
-        \node[draw,dotted,fit=(2)]{};
-        \draw[->](0)--(1);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Initial State}
-  \end{figure}
-
-  Navigate document $1$ to Page 2:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/chrome/2.png}
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc,active,fully](2) at (2,-2){2};
-        \node[doc,jshactive,fully](3) at (3,-1){3};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(3)]{};
-        \node[draw,dotted,fit=(2)]{};
-        \draw[->](0)--(3);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Navigate document $1$ to Page 2.}
-  \end{figure}
-
-  Navigate document $3$ to Page 3:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/chrome/3.png}
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc,active,fully](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,jshactive,fully](4) at (4,-1){4};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Navigate document $3$ to Page 3.}
-  \end{figure}
-
-  Navigate document $2$ to Page 2:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/chrome/4.png}
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,active,fully](4) at (4,-1){4};
-        \node[doc,jshactive,fully](5) at (5,-2){5};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(5)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=0,in=90](5);
-      \end{tikzpicture}
-    }
-    \caption{Navigate document $2$ to Page 2.}
-  \end{figure}
-
-  Navigate document $5$ to Page 3:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/chrome/5.png}
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,active,fully](4) at (4,-1){4};
-        \node[doc](5) at (5,-2){5};
-        \node[doc,jshactive,fully](6) at (6,-2){6};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(6)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=0,in=120](6);
-      \end{tikzpicture}
-    }
-    \caption{Navigate document $5$ to Page 3.}
-  \end{figure}
-
-  \emph{$\aNH$ traverses the history by $-4$ to $\aNH'$}:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/chrome/6.png}
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc,active,fully](1) at (1,-1){1};
-        \node[doc,jshactive,fully](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc](4) at (4,-1){4};
-        \node[doc](5) at (5,-2){5};
-        \node[doc](6) at (6,-2){6};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(6)]{};
-        \draw[->](0)--(1);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Traversal by $-4$.}
-  \end{figure}
-
-  \emph{$\aNH'$ traverses the history by $4$ to $\aNH''$}:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/chrome/7.png}
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,active,fully](4) at (4,-1){4};
-        \node[doc](5) at (5,-2){5};
-        \node[doc,jshactive,fully](6) at (6,-2){6};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(6)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=0,in=120](6);
-      \end{tikzpicture}
-    }
-    \caption{Traversal by $4$.}
-  \end{figure}
-
-  These results in Chrome satisfy Goal~\ref{goal:homomorphism}.
-\end{experiment}
-
-\begin{experiment}
-  In this experiment $pushState$ and $replaceState$ traversals are tested against Goal~\ref{goal:homomorphism}.
-
-  Firefox:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/firefox/1.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc,active,fully](1) at (1,-1){1};
-        \node[doc,jshactive,fully](2) at (2,-2){2};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)]{};
-        \node[draw,dotted,fit=(2)]{};
-        \draw[->](0)--(1);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Initial State}
-  \end{figure}
-
-  Advance document 1 to $6$:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/firefox/2.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc,active,fully](2) at (2,-2){2};
-        \node[doc,jshactive,fully](3) at (3,-1){3};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(3)]{};
-        \node[draw,dotted,fit=(2)]{};
-        \draw[->](0)--(3);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Advance document 1 to $6$}
-  \end{figure}
-
-  Advance document 3 to $7$:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/firefox/3.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc,active,fully](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,jshactive,fully](4) at (4,-1){4};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Advance document 3 to $7$}
-  \end{figure}
-
-  Advance document 2 to $6$:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/firefox/4.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,active,fully](4) at (4,-1){4};
-        \node[doc,jshactive,fully](5) at (5,-2){5};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(5)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=0,in=90](5);
-      \end{tikzpicture}
-    }
-    \caption{Advance document $2$ to $6$}
-  \end{figure}
-
-  Advance $document 2$ to $7$:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/firefox/5.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,active,fully](4) at (4,-1){4};
-        \node[doc](5) at (5,-2){5};
-        \node[doc,jshactive,fully](6) at (6,-2){6};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(6)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=0,in=120](6);
-      \end{tikzpicture}
-    }
-    \caption{Advance document 2 to $7$}
-  \end{figure}
-
-  Traverse $\aNH$ by $-4$:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/firefox/6.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc,active,fully](1) at (1,-1){1};
-        \node[doc,jshactive,fully](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc](4) at (4,-1){4};
-        \node[doc](5) at (5,-2){5};
-        \node[doc](6) at (6,-2){6};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(6)]{};
-        \draw[->](0)--(1);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Traverse $\aNH$ by $-4$}
-  \end{figure}
-
-  Traverse $\aNH$ by $4$:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/firefox/7.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc,active,fully](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,jshactive,fully](4) at (4,-1){4};
-        \node[doc](5) at (5,-2){5};
-        \node[doc](6) at (6,-2){6};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(6)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Traverse $\aNH$ by $4$}
-  \end{figure}
-
-  The last traversal does not satisfy Goal~\ref{goal:homomorphism}.
-
-  Safari:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/safari/1.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc,active,fully](1) at (1,-1){1};
-        \node[doc,jshactive,fully](2) at (2,-2){2};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)]{};
-        \node[draw,dotted,fit=(2)]{};
-        \draw[->](0)--(1);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Initial State}
-  \end{figure}
-
-  Advance document 1 to $6$:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/safari/2.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc,active,fully](2) at (2,-2){2};
-        \node[doc,jshactive,fully](3) at (3,-1){3};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(3)]{};
-        \node[draw,dotted,fit=(2)]{};
-        \draw[->](0)--(3);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Advance document 1 to $6$}
-  \end{figure}
-
-  Advance document 3 to $7$:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/safari/3.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc,active,fully](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,jshactive,fully](4) at (4,-1){4};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Advance document 3 to $7$}
-  \end{figure}
-
-  Advance document 2 to $6$:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/safari/4.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,active,fully](4) at (4,-1){4};
-        \node[doc,jshactive,fully](5) at (5,-2){5};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(5)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=0,in=90](5);
-      \end{tikzpicture}
-    }
-    \caption{Advance document $2$ to $6$}
-  \end{figure}
-
-  Advance $document 2$ to $7$:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/safari/5.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,active,fully](4) at (4,-1){4};
-        \node[doc](5) at (5,-2){5};
-        \node[doc,jshactive,fully](6) at (6,-2){6};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(6)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=0,in=120](6);
-      \end{tikzpicture}
-    }
-    \caption{Advance document 2 to $7$}
-  \end{figure}
-
-  Traverse $\aNH$ by $-4$:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/safari/6.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc,active,fully](1) at (1,-1){1};
-        \node[doc,jshactive,fully](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc](4) at (4,-1){4};
-        \node[doc](5) at (5,-2){5};
-        \node[doc](6) at (6,-2){6};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(6)]{};
-        \draw[->](0)--(1);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Traverse $\aNH$ by $-4$}
-  \end{figure}
-
-  Traverse $\aNH$ by $4$:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/safari/7.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,jshactive,fully](4) at (4,-1){4};
-        \node[doc](5) at (5,-2){5};
-        \node[doc](6) at (6,-2){6};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(6)]{};
-        \draw[->](0)to[out=0,in=140](4);
-      \end{tikzpicture}
-    }
-    \caption{Traverse $\aNH$ by $4$}
-  \end{figure}
-
-  In this traversal, we are unable to determine the active entry for first entry as the state is $null$.
-  This traversal does not satisfy Goal~\ref{goal:homomorphism}.
-
-  Chrome:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/firefox/1.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc,active,fully](1) at (1,-1){1};
-        \node[doc,jshactive,fully](2) at (2,-2){2};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)]{};
-        \node[draw,dotted,fit=(2)]{};
-        \draw[->](0)--(1);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Initial State}
-  \end{figure}
-
-  Advance document 1 to $6$:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/firefox/2.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc,active,fully](2) at (2,-2){2};
-        \node[doc,jshactive,fully](3) at (3,-1){3};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(3)]{};
-        \node[draw,dotted,fit=(2)]{};
-        \draw[->](0)--(3);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Advance document 1 to $6$}
-  \end{figure}
-
-  Advance document 3 to $7$:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/firefox/3.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc,active,fully](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,jshactive,fully](4) at (4,-1){4};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Advance document 3 to $7$}
-  \end{figure}
-
-  Advance document 2 to $6$:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/firefox/4.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,active,fully](4) at (4,-1){4};
-        \node[doc,jshactive,fully](5) at (5,-2){5};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(5)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=0,in=90](5);
-      \end{tikzpicture}
-    }
-    \caption{Advance document $2$ to $6$}
-  \end{figure}
-
-  Advance $document 2$ to $7$:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/firefox/5.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,active,fully](4) at (4,-1){4};
-        \node[doc](5) at (5,-2){5};
-        \node[doc,jshactive,fully](6) at (6,-2){6};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(6)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=0,in=120](6);
-      \end{tikzpicture}
-    }
-    \caption{Advance document 2 to $7$}
-  \end{figure}
-
-  Traverse $\aNH$ by $-4$:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/firefox/6.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc,active,fully](1) at (1,-1){1};
-        \node[doc,jshactive,fully](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc](4) at (4,-1){4};
-        \node[doc](5) at (5,-2){5};
-        \node[doc](6) at (6,-2){6};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(6)]{};
-        \draw[->](0)--(1);
-        \draw[->](0)to[out=-20,in=90](2);
-      \end{tikzpicture}
-    }
-    \caption{Traverse $\aNH$ by $-4$}
-  \end{figure}
-
-  Traverse $\aNH$ by $4$:
-  \begin{figure}[H]
-    \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/firefox/7.png}%
-    }~\raisebox{-.5\height}{
-      \begin{tikzpicture}
-        \node[doc,active,fully](0) at (0,0){0};
-        \node[doc](1) at (1,-1){1};
-        \node[doc](2) at (2,-2){2};
-        \node[doc](3) at (3,-1){3};
-        \node[doc,active,fully](4) at (4,-1){4};
-        \node[doc](5) at (5,-2){5};
-        \node[doc,jshactive,fully](6) at (6,-2){6};
-        \node[draw,dotted,fit=(0)]{};
-        \node[draw,dotted,fit=(1)(4)]{};
-        \node[draw,dotted,fit=(2)(6)]{};
-        \draw[->](0)to[out=0,in=140](4);
-        \draw[->](0)to[out=0,in=120](6);
-      \end{tikzpicture}
-    }
-    \caption{Traverse $\aNH$ by $4$}
-  \end{figure}
-
-  In this experiment, Chrome meets Goal~\ref{goal:homomorphism}.
-
-\end{experiment}
+[Present one experiment in detail.]
 
 \section{Specification}
 
@@ -1652,5 +956,8 @@ Define \emph{$\aNH$ traverses the history by $-\delta$ to $\aNH'$} when:
 
 \bibliographystyle{plain}
 \bibliography{notes}
+
+\appendix
+\include{appendix}
 
 \end{document}
