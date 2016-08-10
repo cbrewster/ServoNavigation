@@ -1,6 +1,8 @@
 \NeedsTeXFormat{LaTeX2e}[2005/12/01]
-\ProvidesClass{notes}[2016/06/23]
+\ProvidesClass{notes}[2016/08/09]
 \LoadClass{article}
+
+\newenvironment{proof}{\trivlist \item[\hskip\labelsep {\sffamily\bfseries Proof:}]}{\endtrivlist}
 
 \renewcommand{\@begintheorem}[2]{\trivlist \item[\hskip\labelsep {\sffamily\bfseries #1\ #2:}]}
 \renewcommand{\@opargbegintheorem}[3]{\trivlist \item[\hskip\labelsep {\sffamily\bfseries #1\ #2 (#3):}]}

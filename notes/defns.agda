@@ -18,6 +18,8 @@ record NavigationHistory(D : Set) : Set₁ where
   field active-~ : ∀ d → (active d ~ d)
   field active-uniq : ∀ d e → A(e) → (d ~ e) → (e ≡ active d)
 
+  field ⇒-impl-≤ : ∀ d e → (d ⇒ e) → (d ≤ e)
+  
   field PATCH : ∀ {a b c d} → (a ∈ A) → (d ∈ A) → (a ~ b) → (c ~ d) → (a < b) → (c < d) → (d ≤ b)
 
   _≲_ : Rel(D)
@@ -100,7 +102,7 @@ H traverse-to d = H′ where
   
   H′ = record { A = A′ ; Fo = Fo ; FTO = FTO ; Eq = Eq
               ; active = active′ ; active-A = active′-A′ ; active-~ = active′-~ ; active-uniq = active′-uniq
-              ; PATCH = PATCH′ }
+              ; ⇒-impl-≤ = ⇒-impl-≤ ; PATCH = PATCH′ }
 
 _traverses-to_ : ∀ {D n} → NavigationHistory(D) → (D ^ n) → NavigationHistory(D)
 (H traverses-to nil) = H

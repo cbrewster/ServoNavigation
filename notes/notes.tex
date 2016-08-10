@@ -2,7 +2,7 @@
 
 \title{A model of navigation history}
 \author{Connor G. Brewster \and Alan Jeffrey}
-\date{DRAFT of 2016-07-20}
+\date{DRAFT of 2016-08-09}
 \indicia{
   \includegraphics[height=4.5ex]{images/by}
   \begin{tabular}[b]{@{}l}%
@@ -43,6 +43,7 @@
 \newcommand{\cDoc}{f}
 \newcommand{\st}{\mathbin.}
 \newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
 \newtheorem{conjecture}{Conjecture}
 \newtheorem{goal}{Goal}
 \newtheorem{patch}{Patch}
@@ -70,7 +71,7 @@ $\delta'$ should be the same as traversing by $\delta+\delta'$. In
 particular, traversing by $+1$ (forward) then by $-1$ (back) is the
 same as traversing by $0$ (doing nothing). We show that the
 specification-aligned model does not satisfy this property, by
-exhibiting a series of counter-examples, which motivate three patches
+exhibiting a series of counter-examples, which motivate four patches
 to the model. We present a series of experiments, showing that
 browsers are inconsistent in their implementation of navigation
 history, but that their behaviour is closer to the patched model than
@@ -151,20 +152,11 @@ to get:
   \node[draw,dotted,fit=(0)(1)(3)] {};
 \end{tikzpicture}\]
 We formalize the notions of traversal and navigation in
-\S\ref{sec:model}, and show that they satisfy two pleasant
-properties:
-\begin{itemize}
+\S\ref{sec:model}, and show the \emph{fundamental property of traversal}:
+that traversing by $\delta$ then by $\delta'$
+is the same as traversing by $\delta+\delta'$.
 
-\item \emph{traverse-then-traverse}:
-  traversing by $\delta$ then by $\delta'$
-  is the same as traversing by $\delta+\delta'$.
-
-\item \emph{navigate-then-traverse}:
-  navigating then traversing by $-1$
-  has the original active document.
-
-\end{itemize}
-Thus far, the model is refreshingly simple, and corresponds well to
+So far, the model is refreshingly simple, and corresponds well to
 the specification and to browser implmentations. Where the problems
 arise is in the \emph{hierarchical} nature of documents. HTML
 documents can contain \verb|iframe| elements, which
@@ -262,9 +254,9 @@ In this paper, we address these:
 \item \S\ref{sec:model} provides a formal model of navigation history,
   which is intended to align with the specification. We show, through
   a series of examples, that it does not satisfy the
-  traverse-then-traverse property, and give patches to the model for
+  fundamental property, and give patches to the model for
   each example. The final model does satisfy the
-  traverse-then-traverse property.
+  fundamental property.
 
 \item \S\ref{sec:experiments} investigates how well the patched
   model aligns with existing browser implementations. We show
@@ -284,7 +276,7 @@ In this section, we present our formal model of navigation history.
 tree and total order, and may be skipped by most readers. The model,
 together with some examples, is given in \S\ref{sec:defns}. In
 \S\ref{sec:properties} we define the fundamental property of
-navigtion history, show that the model does \emph{not} satisfy
+traversal, show that the model does \emph{not} satisfy
 it, but can be patched to do so.
 
 \subsection{Preliminaries}
@@ -414,16 +406,14 @@ staring with \emph{navigation}, which is triggered by following hyperlinks,
 or other actions which trigger document loading.
 
 \begin{definition}[Navigation]
-Define \emph{deleting $\aDoc$ from $\aNH$}, when $\aDoc\not\in\FullyActive$, to be $\aNH'$ where:
+Define \emph{deleting $\aDoc$ from $\aNH$}, when $\aDoc\not\in\FullyActive$,
+to be $\aNH'=(\Docs',\Active,{\leChron},{\parentOf},{\eqSess})$ where:
 \begin{itemize}
-\item $\Docs' = \aDoc \setminus \{ \bDoc \mid \aDoc\parentOf^* \bDoc \}$,
-\item $\bDoc\in\Active'$ whenever $\bDoc\in\Active$,
-\item $\bDoc\leChron'\cDoc$ whenever $\bDoc\leChron\cDoc$,
-\item $\bDoc\parentOf'\cDoc$ whenever $\bDoc\parentOf\cDoc$, and
-\item $\bDoc\eqSess'\cDoc$ whenever $\bDoc\eqSess\cDoc$.
+\item $\Docs' = \Docs \setminus \{ \bDoc \mid \aDoc\parentOf^* \bDoc \}$.
 \end{itemize}
 Define \emph{replacing $\aDoc$ by $\aDoc'$ in $\aNH$}, where $\aDoc\in\Active$ and
-$\aDoc'\notin\Docs$, to be $\aNH'$ where:
+$\aDoc'\notin\Docs$,
+to be $\aNH'=(\Docs',\Active',{\leChron'},{\parentOf'},{\eqSess'})$ where:
 \begin{itemize}
 \item $\Docs' = \Docs \cup \{\aDoc'\}$,
 \item $\bDoc \in \Active'$ whenever
@@ -442,7 +432,7 @@ $\aDoc'\notin\Docs$, to be $\aNH'$ where:
 \end{itemize}
 Define \emph{navigating from $\aDoc$ to $\aDoc'$ in $\aNH$} to be the result of:
 \begin{itemize}
-\item deleting the session future of $\aDoc$, and
+\item deleting the session future of $\aDoc$, and then
 \item replacing $\aDoc$ by $\aDoc'$.
   \QED
 \end{itemize}
@@ -499,23 +489,20 @@ then replace $1$ by $6$:
 We also define \emph{traversing the history}, which changes the active
 documents.
 \begin{definition}[Traversal]
-Define \emph{traversing the history to $\aDoc$ in $\aNH$} to be $\aNH'$ where:
+Define \emph{traversing the history to $\aDoc$ in $\aNH$}
+to be $\aNH'=(\Docs,\Active',{\leChron},{\parentOf},{\eqSess})$ where:
 \begin{itemize}
-\item $\Docs'$ is $\Docs$,
 \item $\bDoc\in\Active'$ whenever $\aDoc\not\eqSess\bDoc \in \Active$, or
-  $\aDoc=\bDoc$,
-\item $\bDoc\leChron'\cDoc$ whenever $\bDoc\leChron\cDoc$,
-\item $\bDoc\parentOf'\cDoc$ whenever $\bDoc\parentOf\cDoc$, and
-\item $\bDoc\eqSess'\cDoc$ whenever $\bDoc\eqSess\cDoc$.
+  $\aDoc=\bDoc$.
 \end{itemize}
 Define \emph{$\aNH$ traverses the history by $+\delta$ to $\aNH'$} when:
 \begin{itemize}
-\item the joint session future of $\aNH$ is $\aDoc_1 \gtChron \cdots \gtChron \aDoc_\delta \gtChron \cdots$,
+\item the joint session future of $\aNH$ is $\aDoc_1 \ltChron \cdots \ltChron \aDoc_\delta \ltChron \cdots$,
 \item $H$ traverses the history to $d_\delta$ in $H'$
 \end{itemize}
 Define \emph{$\aNH$ traverses the history by $-\delta$ to $\aNH'$} when:
 \begin{itemize}
-\item the joint session past of $\aNH$ is $\aDoc_1 \ltChron \cdots \ltChron \aDoc_\delta \ltChron \cdots$,
+\item the joint session past of $\aNH$ is $\aDoc_1 \gtChron \cdots \gtChron \aDoc_\delta \gtChron \cdots$,
 \item $H$ traverses the history to $d_\delta$ in $H'$
 \end{itemize}
 Define \emph{$\aNH$ traverses the history by $0$ to $\aNH'$} when $\aNH=\aNH'$.
@@ -536,8 +523,8 @@ For example, to traverse the history by $-2$ in:
   \draw[->](1)--(4);
   \draw[->](0)--(3);
 \end{tikzpicture}\]
-we find the joint session past (which is $1 \ltChron 2$)
-and traverse the history to the second item (which is $2$)
+we find the joint session past (which is $2 \gtChron 1$)
+and traverse the history to the second item (which is $1$)
 to arrive at:
 \[\begin{tikzpicture}
   \node[doc,active,fully](0) at (0,0){0};
@@ -595,15 +582,16 @@ specification, for example \cite[7.7.2]{whatwg} includes:
 
 We now consider the fundamental property of navigation history:
 
-\begin{goal}[Traverse-then-traverse]
-\label{goal:homomorphism}
-  If $H$ traverses the history by $\delta$ to $H'$
+\begin{definition}[Fundamental property]
+\label{defn:fundamental}
+  $H$ satisfies the \emph{fundamental property of traversal} whenever
+  $H$ traverses the history by $\delta$ to $H'$
   and $H'$ traverses the history by $\delta'$ to $H''$
-  then $H$ traverses the history by $\delta+\delta'$ to $H''$.
+  implies $H$ traverses the history by $\delta+\delta'$ to $H''$.
   \QED
-\end{goal}
-Unfortunately, navigation as specified does not satisfy this property,
-due to the interplay of session history with the tree structure of documents.
+\end{definition}
+Unfortunately, navigation histories as specified do not always satisfy the fundamental property,
+due to ways individual session histories are combined into the joint session history.
 In this section, we give a series of counterexamples, and propose patches to
 the model to address each counterexample.
 
@@ -683,8 +671,7 @@ Define \emph{$\aNH$ traverses the history by $-\delta$ to $\aNH'$} when:
   \QED
 \end{itemize}
 \end{patch}
-Unfortunately, Goal~\ref{goal:homomorphism} is not satisfied,
-even with this patch.
+
 \begin{counterexample}
   Let $H$ be:
   \[\begin{tikzpicture}
@@ -800,7 +787,7 @@ Define:
   which is not the same as $H$.
   \QED
 \end{counterexample}
-This final counterexample is caused by an asymmetry in the definition
+This counterexample is caused by an asymmetry in the definition
 of traversal: it is defined in terms of navigating \emph{to} a document
 $d$, and not navigating \emph{from} a document. We fix this
 by making the definition symmetric:
@@ -848,27 +835,9 @@ which is the same as traversing the history to $1$:
 \draw[->](0)--(1);
 \draw[->](0)to[out=-20,in=90](2);
 \end{tikzpicture}\]
-With these patches, we conjecture that our fundamental property is true,
-and moreover that traversal forms an inverse of navigation.
-
-\begin{conjecture}[Traverse-then-traverse]
-\label{thm:homomorphism}
-  If $H$ traverses the history by $\delta$ to $H'$
-  and $H'$ traverses the history by $\delta'$ to $H''$
-  then $H$ traverses the history by $\delta+\delta'$ to $H''$.
-  \QED
-\end{conjecture}
-
-\begin{conjecture}[Navigate-then-traverse]
-  If $\aDoc$ in $\aNH$ navigates to $\aDoc'$ in $\aNH'$,
-  and $\aNH'$ traverses the history by $-1$ to $\aNH''$,
-  then $\Active=\Active''$.
-  \QED
-\end{conjecture}
-%
-[NOT TRUE: oh rats!]
 
 \begin{counterexample}
+\label{cex:not-well-formed}
   Let $H$ be:
   \[\begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
@@ -911,37 +880,59 @@ and moreover that traversal forms an inverse of navigation.
   which is not the same as $H$.
   \QED
 \end{counterexample}
+%
+The problem here is not the definition of `traversing by $\delta$', but the definition
+of navigation histories themselves. They allow for states such as $H$ from
+Counterexample~\ref{cex:not-well-formed}, which includes the problematic documents:
+\[\begin{tikzpicture}
+  \node[doc,active,fully](1) at (1,-1){1};
+  \node[doc](2) at (2,-2){2};
+  \node[doc](3) at (3,-1){3};
+  \node[doc,jshactive,fully](4) at (4,-2){4};
+  \node[draw,dotted,fit=(1)(3)]{};
+  \node[draw,dotted,fit=(2)(4)]{};
+\end{tikzpicture}\]
+There are similar problems with documents:
+\[\begin{tikzpicture}
+  \node[doc,active,fully](2) at (2,-1){2};
+  \node[doc](1) at (1,-2){1};
+  \node[doc](3) at (3,-1){3};
+  \node[doc,jshactive,fully](4) at (4,-2){4};
+  \node[draw,dotted,fit=(2)(3)]{};
+  \node[draw,dotted,fit=(1)(4)]{};
+\end{tikzpicture}\]
+and with documents:
+\[\begin{tikzpicture}
+  \node[doc,active,fully](1) at (1,-1){1};
+  \node[doc](3) at (3,-2){3};
+  \node[doc](2) at (2,-1){2};
+  \node[doc,jshactive,fully](4) at (4,-2){4};
+  \node[draw,dotted,fit=(1)(2)]{};
+  \node[draw,dotted,fit=(3)(4)]{};
+\end{tikzpicture}\]
+%
+It turns out that these are the only remaining cause of counterexamples,
+and we will call examples like this not \emph{well-formed}.
 
-%% \begin{counterexample}
-%%   \[\begin{tikzpicture}
-%%     \node[doc,active,fully](0) at (0,0){0};
-%%     \node[doc,jshactive,fully](1) at (1,-1){1};
-%%     \node[doc](2) at (2,0){2};
-%%     \node[draw,dotted,fit=(0)(2)] {};
-%%     \node[draw,dotted,fit=(1)]{};
-%%     \draw[->](0)--(1);
-%%   \end{tikzpicture}\]
-%%   navigates 1 to 3 in:
-%%   \[\begin{tikzpicture}
-%%     \node[doc,active,fully](0) at (0,0){0};
-%%     \node[doc](1) at (1,-1){1};
-%%     \node[doc](2) at (2,0){2};
-%%     \node[doc,jshactive,fully](3) at (3,-1){3};
-%%     \node[draw,dotted,fit=(0)(2)] {};
-%%     \node[draw,dotted,fit=(1)(3)]{};
-%%     \draw[->](0)--(3);
-%%   \end{tikzpicture}\]
-%%   which traverses the history by $-1$ to:
-%%   \[\begin{tikzpicture}
-%%     \node[doc](0) at (0,0){0};
-%%     \node[doc](1) at (1,-1){1};
-%%     \node[doc,jshactive,fully](2) at (2,0){2};
-%%     \node[doc,active](3) at (3,-1){3};
-%%     \node[draw,dotted,fit=(0)(2)] {};
-%%     \node[draw,dotted,fit=(1)(3)]{};
-%%     \draw[->](0)--(3);
-%%   \end{tikzpicture}\]
-%% \end{counterexample}
+\begin{definition}[Well-formed]
+  A navigation history is \emph{well formed} whenever
+  for any $a \ltSess b$ and $c \ltSess d$,
+  if $a \in \Active$ and $d \in \Active$ then $d \leChron b$.
+\end{definition}
+%
+With these patches, we can prove the fundamental property of traversal.
+
+\begin{theorem}
+\label{thm:fundamental}
+  For any well-formed navigation history $H$,
+  if $H$ traverses the history by $\delta$ to $H'$
+  and $H'$ traverses the history by $\delta'$ to $H''$
+  then $H$ traverses the history by $\delta+\delta'$ to $H''$.
+\end{theorem}
+\begin{proof}
+  Mechanically verified in Agda.
+  \QED
+\end{proof}
 
 \section{Experiments}
 \label{sec:experiments}
