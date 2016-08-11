@@ -22,7 +22,8 @@ BackTheorem {D} {H} {._} {H″} {δ = succ δ} {δ′} H∈WF (back (d ∷ ds) (
   ds∈BT₁ : (ds ∈ BackTarget*(H₁))
   ds∈BT₁ = BT-tl {H = H} d d∈CGB ds d∷ds∈BT
 
-  postulate H₁∈WF : WellFormed(H₁)
+  H₁∈WF : WellFormed(H₁)
+  H₁∈WF = back-WF H d d∈CGB H∈WF d∈BT
   
   H₁-to-H″ : H₁ traverses-by (-ve δ + δ′) to H″
   H₁-to-H″ = BackTheorem H₁∈WF (back ds ds∈CGB ds∈BT₁) H′-to-H″
@@ -118,10 +119,14 @@ FwdTheorem {D} {H} {._} {H″} {δ = succ δ} {δ′} H∈WF (fwd (d ∷ ds) d�
 
   H₁ = (H traverse-to d)
 
+  d∈FT : (d ∈ FwdTarget(H))
+  d∈FT = FT-hd {H = H} d ds d∷ds∈FT
+
   ds∈FT₁ : (ds ∈ FwdTarget*(H₁))
   ds∈FT₁ = FT-tl {H = H} d ds d∷ds∈FT
 
-  postulate H₁∈WF : WellFormed(H₁)
+  H₁∈WF : WellFormed(H₁)
+  H₁∈WF = fwd-WF H d H∈WF d∈FT
   
   H₁-to-H″ : H₁ traverses-by (succ δ + δ′) to H″
   H₁-to-H″ = FwdTheorem H₁∈WF (fwd ds ds∈FT₁) H′-to-H″

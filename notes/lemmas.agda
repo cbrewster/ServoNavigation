@@ -328,3 +328,6 @@ to-from {D} {H} d .d d∈CGB H∈WF ((a , (a∈A , (a<d , a~d))) , d-min) (_ , d
 
   H=H″ : (H ≣ H″)
   H=H″ = NH-CONG H H″ A⊆A″ A″⊆A REFL REFL REFL
+
+postulate fwd-WF : ∀ {D} (H : NavigationHistory(D)) d → WellFormed(H) → (d ∈ FwdTarget(H)) → WellFormed(H traverse-to d)
+postulate back-WF : ∀ {D} (H : NavigationHistory(D)) d d∈CGB → WellFormed(H) → (d ∈ BackTarget(H)) → WellFormed(H traverse-from d ∵ d∈CGB)
