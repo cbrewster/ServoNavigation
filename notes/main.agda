@@ -5,12 +5,13 @@ open import defns
 open import lemmas
 
 BackTheorem : ∀ {D} {H H′ H″ : NavigationHistory(D)} {δ δ′} →
+  (WellFormed(H)) →
   (H traverses-by (-ve δ) to H′) → 
   (H′ traverses-by δ′ to H″) → 
   (H traverses-by (-ve δ + δ′) to H″)
 
-BackTheorem {δ = zero} (back nil ds∈CGB ds∈BT) H′-to-H″ = H′-to-H″
-BackTheorem {D} {H} {._} {H″} {δ = succ δ} {δ′} (back (d ∷ ds) (d∈CGB , ds∈CGB) d∷ds∈BT) H′-to-H″ = H-to-H″ where
+BackTheorem {δ = zero} H∈WF (back nil ds∈CGB ds∈BT) H′-to-H″ = H′-to-H″
+BackTheorem {D} {H} {._} {H″} {δ = succ δ} {δ′} H∈WF (back (d ∷ ds) (d∈CGB , ds∈CGB) d∷ds∈BT) H′-to-H″ = H-to-H″ where
 
   H₁ = (H traverse-from d ∵ d∈CGB)
   H′ = (H₁ traverses-from ds ∵ ds∈CGB)
@@ -21,8 +22,10 @@ BackTheorem {D} {H} {._} {H″} {δ = succ δ} {δ′} (back (d ∷ ds) (d∈CGB
   ds∈BT₁ : (ds ∈ BackTarget*(H₁))
   ds∈BT₁ = BT-tl {H = H} d d∈CGB ds d∷ds∈BT
 
+  postulate H₁∈WF : WellFormed(H₁)
+  
   H₁-to-H″ : H₁ traverses-by (-ve δ + δ′) to H″
-  H₁-to-H″ = BackTheorem (back ds ds∈CGB ds∈BT₁) H′-to-H″
+  H₁-to-H″ = BackTheorem H₁∈WF (back ds ds∈CGB ds∈BT₁) H′-to-H″
   
   Lemma : ∀ {H″} n →
     (H₁ traverses-by n to H″) →
@@ -35,7 +38,7 @@ BackTheorem {D} {H} {._} {H″} {δ = succ δ} {δ′} (back (d ∷ ds) (d∈CGB
     e∈FT₁ = FT-hd {H = H₁} e nil e∷es∈FT₁
 
     H=H₀ : H ≣ H₀
-    H=H₀ = from-to d e d∈CGB d∈BT e∈FT₁
+    H=H₀ = from-to d e d∈CGB H∈WF d∈BT e∈FT₁
     
     H₀-to-H₀ : (H₀ traverses-by (-ve zero) to H₀)
     H₀-to-H₀ = back nil tt (BT-nil {H = H₀})
@@ -55,7 +58,7 @@ BackTheorem {D} {H} {._} {H″} {δ = succ δ} {δ′} (back (d ∷ ds) (d∈CGB
     es∈FT₀ = FT-tl {H = H₁} e es e∷es∈FT₁
 
     H=H₀ : H ≣ H₀
-    H=H₀ = from-to d e d∈CGB d∈BT e∈FT₁
+    H=H₀ = from-to d e d∈CGB H∈WF d∈BT e∈FT₁
     
     H₀-to-Hₙ : H₀ traverses-by (succ n) to Hₙ
     H₀-to-Hₙ = fwd es es∈FT₀
@@ -69,11 +72,12 @@ BackTheorem {D} {H} {._} {H″} {δ = succ δ} {δ′} (back (d ∷ ds) (d∈CGB
   H-to-H″ = Lemma (-ve δ + δ′) H₁-to-H″
   
 FwdTheorem : ∀ {D} {H H′ H″ : NavigationHistory(D)} {δ δ′} →
+  (WellFormed(H)) →
   (H traverses-by (succ δ) to H′) → 
   (H′ traverses-by δ′ to H″) → 
   (H traverses-by (succ δ + δ′) to H″)
 
-FwdTheorem {D} {H} {._} {H″} {δ = δ} {δ′} (fwd (d ∷ ds) d∷ds∈FT) H′-to-H″ with Lemma where
+FwdTheorem {D} {H} {._} {H″} {δ = δ} {δ′} H∈WF (fwd (d ∷ ds) d∷ds∈FT) H′-to-H″ with Lemma where
 
   H₁ = (H traverse-to d)
   H′ = (H₁ traverses-to ds)
@@ -100,7 +104,7 @@ FwdTheorem {D} {H} {._} {H″} {δ = δ} {δ′} (fwd (d ∷ ds) d∷ds∈FT) H�
     es∈BT₀ = BT-tl {H = H₁} e e∈CGB es e∷es∈BT₁
 
     H=H₀ : H ≣ H₀
-    H=H₀ = to-from d e e∈CGB d∈FT e∈BT₁
+    H=H₀ = to-from d e e∈CGB H∈WF d∈FT e∈BT₁
     
     H₀-to-Hₙ : H₀ traverses-by (-ve n) to Hₙ
     H₀-to-Hₙ = back es es∈CGB es∈BT₀
@@ -108,22 +112,25 @@ FwdTheorem {D} {H} {._} {H″} {δ = δ} {δ′} (fwd (d ∷ ds) d∷ds∈FT) H�
     H-to-Hₙ : H traverses-by (-ve n) to Hₙ
     H-to-Hₙ = SUBST (λ ∙ → ∙ traverses-by (-ve n) to Hₙ) H=H₀ H₀-to-Hₙ
 
-FwdTheorem {D} {H} {._} {H″} {δ = zero} {δ′} (fwd (d ∷ nil) d∷nil∈FT) H′-to-H″ | Lemma = Lemma δ′ H′-to-H″
+FwdTheorem {D} {H} {._} {H″} {δ = zero} {δ′} H∈WF (fwd (d ∷ nil) d∷nil∈FT) H′-to-H″ | Lemma = Lemma δ′ H′-to-H″
 
-FwdTheorem {D} {H} {._} {H″} {δ = succ δ} {δ′} (fwd (d ∷ ds) d∷ds∈FT) H′-to-H″ | Lemma = H-to-H″ where
+FwdTheorem {D} {H} {._} {H″} {δ = succ δ} {δ′} H∈WF (fwd (d ∷ ds) d∷ds∈FT) H′-to-H″ | Lemma = H-to-H″ where
 
   H₁ = (H traverse-to d)
 
   ds∈FT₁ : (ds ∈ FwdTarget*(H₁))
   ds∈FT₁ = FT-tl {H = H} d ds d∷ds∈FT
 
+  postulate H₁∈WF : WellFormed(H₁)
+  
   H₁-to-H″ : H₁ traverses-by (succ δ + δ′) to H″
-  H₁-to-H″ = FwdTheorem (fwd ds ds∈FT₁) H′-to-H″
+  H₁-to-H″ = FwdTheorem H₁∈WF (fwd ds ds∈FT₁) H′-to-H″
 
   H-to-H″ : H traverses-by sucz (succ δ + δ′) to H″
   H-to-H″ = subst (λ ∙ → H traverses-by ∙ to H″) (succ-dist-+ (succ δ) δ′) (Lemma (succ δ + δ′) H₁-to-H″)
 
 Theorem : ∀ {D} {H H′ H″ : NavigationHistory(D)} {δ δ′} →
+  (WellFormed(H)) →
   (H traverses-by δ to H′) → 
   (H′ traverses-by δ′ to H″) → 
   (H traverses-by (δ + δ′) to H″)
