@@ -231,10 +231,11 @@ FT-cons {D} {H} d ds ((a , (a∈A , (a<d , a~d))) , d-min) ((ds↑ , ds∈JSF′
 
     
 from-to : ∀ {D} {H : NavigationHistory(D)} d e d∈CGB →
+  (WellFormed(H)) →
   (d ∈ BackTarget(H)) →
   (e ∈ FwdTarget(H traverse-from d ∵ d∈CGB)) →
   (H ≣ ((H traverse-from d ∵ d∈CGB) traverse-to e))
-from-to {D} {H} d e d∈CGB ((d∈A , _) , d-max) e∈FT′ with lemma e∈FT′ where
+from-to {D} {H} d e d∈CGB H∈WF ((d∈A , _) , d-max) e∈FT′ with lemma e∈FT′ where
 
   H′ = (H traverse-from d ∵ d∈CGB)
 
@@ -244,10 +245,10 @@ from-to {D} {H} d e d∈CGB ((d∈A , _) , d-max) e∈FT′ with lemma e∈FT′
   lemma : (e ∈ FwdTarget′) → (d ≡ e)
   lemma (e∈JSP′ , e-min) with max(SessionPast(d)) ∵ d∈CGB | ≤-total d e
   lemma (e∈JSP′ , e-min) | (c , ((c<d , c~d) , c-max)) | in₁ d≤e = ≤-asym d≤e (e-min d (c , (in₂ refl , (c<d , c~d))))
-  lemma ((a  , (in₁ (c≁a , a∈A) , (a<e , a~e))) , e-min) | c , ((c<d , c~d) , c-max) | in₂ e<d = contradiction (<-impl-≱ e<d (PATCH a∈A d∈A a~e c~d a<e c<d))
+  lemma ((a  , (in₁ (c≁a , a∈A) , (a<e , a~e))) , e-min) | c , ((c<d , c~d) , c-max) | in₂ e<d = contradiction (<-impl-≱ e<d (H∈WF (a<e , a~e) (c<d , c~d) a∈A d∈A))
   lemma ((.c , (in₂ refl , (c<e , c~e))) , e-min) | c , ((c<d , c~d) , c-max) | in₂ e<d = contradiction (<-impl-≱ c<e (c-max e (e<d , ~-trans (~-sym c~e) c~d)))
   
-from-to {D} {H} d .d d∈CGB ((d∈A , _) , d-max) e∈FT′ | refl = H=H″ where
+from-to {D} {H} d .d d∈CGB H∈WF ((d∈A , _) , d-max) e∈FT′ | refl = H=H″ where
 
   H′ = (H traverse-from d ∵ d∈CGB)
   H″ = (H′ traverse-to d)
@@ -273,10 +274,11 @@ from-to {D} {H} d .d d∈CGB ((d∈A , _) , d-max) e∈FT′ | refl = H=H″ whe
 
 
 to-from : ∀ {D} {H : NavigationHistory(D)} d e e∈CGB →
+  (WellFormed(H)) →
   (d ∈ FwdTarget(H)) →
   (e ∈ BackTarget(H traverse-to d)) →
   (H ≣ ((H traverse-to d) traverse-from e ∵ e∈CGB))
-to-from {D} {H} d e e∈CGB ((a , (a∈A , (a<d , a~d))) , d-min) e∈BT′ with lemma e∈BT′ | max(SessionPast(e)) ∵ e∈CGB where
+to-from {D} {H} d e e∈CGB H∈WF ((a , (a∈A , (a<d , a~d))) , d-min) e∈BT′ with lemma e∈BT′ | max(SessionPast(e)) ∵ e∈CGB where
 
   H′ = (H traverse-to d)
 
@@ -290,11 +292,11 @@ to-from {D} {H} d e e∈CGB ((a , (a∈A , (a<d , a~d))) , d-min) e∈BT′ with
     d≤e = e-max d (in₂ refl , (a , (a<d , a~d)))
 
     e≤d : (e ≤ d)
-    e≤d = PATCH a∈A e∈A a~d b~e a<d b<e
+    e≤d = H∈WF (a<d , a~d) (b<e , b~e) a∈A e∈A 
     
   lemma ((in₂ d≡e , _) , _) = d≡e
 
-to-from {D} {H} d .d d∈CGB ((a , (a∈A , (a<d , a~d))) , d-min) (_ , d-max) | refl | (c , ((c<d , c~d) , c-max)) with ≤-asym a≤c c≤a where
+to-from {D} {H} d .d d∈CGB H∈WF ((a , (a∈A , (a<d , a~d))) , d-min) (_ , d-max) | refl | (c , ((c<d , c~d) , c-max)) with ≤-asym a≤c c≤a where
 
   open NavigationHistory H
 
@@ -306,7 +308,7 @@ to-from {D} {H} d .d d∈CGB ((a , (a∈A , (a<d , a~d))) , d-min) (_ , d-max) |
   a≤c : (a ≤ c)
   a≤c = c-max a (a<d , a~d)
 
-to-from {D} {H} d .d d∈CGB ((a , (a∈A , (a<d , a~d))) , d-min) (_ , d-max) | refl | (.a , ((_ , _) , a-max)) | refl = H=H″ where
+to-from {D} {H} d .d d∈CGB H∈WF ((a , (a∈A , (a<d , a~d))) , d-min) (_ , d-max) | refl | (.a , ((_ , _) , a-max)) | refl = H=H″ where
 
   H′ = (H traverse-to d)
   H″ = (H′ traverse-to a)
@@ -326,3 +328,27 @@ to-from {D} {H} d .d d∈CGB ((a , (a∈A , (a<d , a~d))) , d-min) (_ , d-max) |
 
   H=H″ : (H ≣ H″)
   H=H″ = NH-CONG H H″ A⊆A″ A″⊆A REFL REFL REFL
+
+fwd-WF : ∀ {D} (H : NavigationHistory(D)) e →
+  WellFormed(H) →
+  (e ∈ FwdTarget(H)) →
+  WellFormed(H traverse-to e)
+fwd-WF H e H∈WF ((f , (f∈A , f≲e)) , e-min) a≲b c≲d (in₁ (e≁a , a∈A)) (in₁ (e≁d , d∈A)) = H∈WF a≲b c≲d a∈A d∈A
+fwd-WF H e H∈WF ((f , (f∈A , f≲e)) , e-min) a≲b c≲e (in₁ (e≁a , a∈A)) (in₂ refl)        = e-min _ (_ , (a∈A , a≲b))
+fwd-WF H e H∈WF ((f , (f∈A , f≲e)) , e-min) e≲b c≲d (in₂ refl)        (in₁ (e≁d , d∈A)) = H∈WF (≲-trans f≲e e≲b) c≲d f∈A d∈A where open NavigationHistory H
+fwd-WF H e H∈WF ((f , (f∈A , f≲e)) , e-min) e≲b c≲e (in₂ refl)        (in₂ refl)        = e-min _ (f , (f∈A , ≲-trans f≲e e≲b)) where open NavigationHistory H
+
+back-WF : ∀ {D} (H : NavigationHistory(D)) e e∈CGB →
+  WellFormed(H) →
+  (e ∈ BackTarget(H)) →
+  WellFormed(H traverse-from e ∵ e∈CGB)
+back-WF H e e∈CGB H∈WF ((e∈A , _) , e-max)         (a<b , a~b) c≲d a∈A′              d∈A′              with max(SessionPast(e)) ∵ e∈CGB where open NavigationHistory H
+back-WF H e e∈CGB H∈WF ((e∈A , _) , e-max)         (a<b , a~b) c≲d (in₁ (f≁a , a∈A)) (in₁ (f≁d , d∈A)) | (f , ((f<e , f~e) , f-max)) = H∈WF (a<b , a~b) c≲d a∈A d∈A
+back-WF H e e∈CGB H∈WF ((e∈A , _) , e-max)         (a<b , a~b) c≲f (in₁ (f≁a , a∈A)) (in₂ refl)        | (f , ((f<e , f~e) , f-max)) = ≤-trans (<-impl-≤ f<e) (H∈WF (a<b , a~b) (f<e , f~e) a∈A e∈A) where open NavigationHistory H
+back-WF H e e∈CGB H∈WF ((e∈A , _) , e-max) {b = b} (f<b , f~b) c≲d (in₂ refl)        (in₁ (f≁d , d∈A)) | (f , ((f<e , f~e) , f-max)) with ≤-total b e | ≤-total e b where open NavigationHistory H
+back-WF H e e∈CGB H∈WF ((e∈A , _) , e-max)         (f<b , f~b) c≲d (in₂ refl)        (in₁ (f≁d , d∈A)) | (f , ((f<e , f~e) , f-max)) | in₁ b≤e | in₁ e≤b with ≤-asym b≤e e≤b where open NavigationHistory H
+back-WF H e e∈CGB H∈WF ((e∈A , _) , e-max)         (f<b , f~b) c≲d (in₂ refl)        (in₁ (f≁d , d∈A)) | (f , ((f<e , f~e) , f-max)) | in₁ b≤e | in₁ e≤b | refl = e-max _ (d∈A , (_ , c≲d))
+back-WF H e e∈CGB H∈WF ((e∈A , _) , e-max)         (f<b , f~b) c≲d (in₂ refl)        (in₁ (f≁d , d∈A)) | (f , ((f<e , f~e) , f-max)) | in₁ b≤e | in₂ b<e = contradiction (<-impl-≱ f<b (f-max _ (b<e , ~-trans (~-sym f~b) f~e))) where open NavigationHistory H
+back-WF H e e∈CGB H∈WF ((e∈A , _) , e-max)         (f<b , f~b) c≲d (in₂ refl)        (in₁ (f≁d , d∈A)) | (f , ((f<e , f~e) , f-max)) | in₂ e<b | _ = H∈WF (e<b , ~-trans (~-sym f~e) f~b) c≲d e∈A d∈A where open NavigationHistory H
+back-WF H e e∈CGB H∈WF ((e∈A , _) , e-max)         (f<b , f~b) c≲f (in₂ refl)        (in₂ refl)        | (f , ((f<e , f~e) , f-max)) = <-impl-≤ f<b where open NavigationHistory H
+
