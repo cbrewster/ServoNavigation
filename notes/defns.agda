@@ -20,8 +20,6 @@ record NavigationHistory(D : Set) : Set₁ where
 
   field ⇒-impl-≤ : ∀ d e → (d ⇒ e) → (d ≤ e)
   
-  field PATCH : ∀ {a b c d} → (a ∈ A) → (d ∈ A) → (a ~ b) → (c ~ d) → (a < b) → (c < d) → (d ≤ b)
-
   _≲_ : Rel(D)
   (d ≲ e) = (d < e) ∧ (d ~ e)
   
@@ -98,11 +96,12 @@ H traverse-to d = H′ where
   active′-uniq e .d (in₂ refl) e~d | in₁ d~e = refl
   active′-uniq e .d (in₂ refl) e~d | in₂ ¬d~e = contradiction (¬d~e (~-sym e~d))
 
-  postulate PATCH′ : ∀ {a b c d} → (a ∈ A′) → (d ∈ A′) → (a ~ b) → (c ~ d) → (a < b) → (c < d) → (d ≤ b)
-  
   H′ = record { A = A′ ; Fo = Fo ; FTO = FTO ; Eq = Eq
               ; active = active′ ; active-A = active′-A′ ; active-~ = active′-~ ; active-uniq = active′-uniq
-              ; ⇒-impl-≤ = ⇒-impl-≤ ; PATCH = PATCH′ }
+              ; ⇒-impl-≤ = ⇒-impl-≤ }
+
+WellFormed : ∀ {D} → (NavigationHistory(D)) → Set
+WellFormed H = ∀ {a b c d} → (a ≲ b) → (c ≲ d) → (a ∈ A) → (d ∈ A) → (d ≤ b) where open NavigationHistory H
 
 _traverses-to_ : ∀ {D n} → NavigationHistory(D) → (D ^ n) → NavigationHistory(D)
 (H traverses-to nil) = H
