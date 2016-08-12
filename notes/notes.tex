@@ -2,7 +2,7 @@
 
 \title{A model of navigation history}
 \author{Connor G. Brewster \and Alan Jeffrey}
-\date{DRAFT of 2016-08-10}
+\date{DRAFT of 2016-08-11}
 \indicia{
   \includegraphics[height=4.5ex]{images/by}
   \begin{tabular}[b]{@{}l}%
@@ -103,7 +103,7 @@ include~\cite{HH:2006,Haydar:2004,HPS:2004,LHYT:2000,WP:2003}, which
 predate and are not aligned with the \textsc{whatwg}
 specification~\cite{whatwg}.  The specification of the navigation API
 is informal, and has complex dependencies on the rest of the HTML
-specification~\cite{whatwg}. There is little discussion of the goals
+specification. There is little discussion of the goals
 of the API, and an unclear alignment with browser implementations.
 
 In this paper, we present a formal model of navigation, aligned with
@@ -455,7 +455,7 @@ navigating from $1$ to $6$ in:
   \draw[->](1)--(4);
   \draw[->](0)--(3);
 \end{tikzpicture}\]
-we first delete the session future of $1$ (which is $\{5\}$):
+we first delete the session future of $1$ (which is $5$):
 \[\begin{tikzpicture}
   \node[doc,active,fully](0) at (0,0){0};
   \node[doc,jshactive,fully](1) at (1,-1){1};
@@ -542,7 +542,7 @@ to arrive at:
   \draw[->](0)--(3);
 \end{tikzpicture}\]
 These definitions are intended to formally capture the HTML
-specification, for example \cite[7.7.2]{whatwg} includes:
+specification, for example \cite[\S7.7.2]{whatwg} includes:
 \begin{quote}
   To \textbf{traverse the history by a delta} $\delta$, the user agent
   must append a task to this top-level browsing context's session
@@ -801,7 +801,7 @@ Define \emph{$\aNH$ traverses the history from $\aDoc'$} when there is some $\aD
 \end{itemize}
 Define \emph{$\aNH$ traverses the history by $-\delta$ to $\aNH'$} when:
 \begin{itemize}
-\item the joint session past and active documents of $\aNH$ is $\aDoc_1 \gtChron \cdots \gtChron \aDoc_\delta \gtChron \cdots$,
+\item the joint session past and active documents of $\aNH$ are $\aDoc_1 \gtChron \cdots \gtChron \aDoc_\delta \gtChron \cdots$,
 \item there is some $\aNH=\aNH_0,\ldots,\aNH_\delta=\aNH'$, such that
 \item $H_{i-1}$ traverses the history from $d_i$ in $H_i$ for each $1 \le i \le \delta$.
   \QED
@@ -991,7 +991,28 @@ With these patches, we can prove the fundamental property of traversal.
   then $H$ traverses the history by $\delta+\delta'$ to $H''$.
 \end{theorem}
 \begin{proof}
-  Mechanically verified in Agda.
+  In this paper, we give a proof sketch. The full details have been Mechanically verified in Agda~\cite{AgdaProofs}.
+  Define:
+  \begin{itemize}
+  \item the \emph{back target} of a navigation history $H$ to be the $\le$-largest $b\in A$ such that
+    there is some $a\in D$ with $a \ltSess b$,
+  \item the \emph{forward target} of $H$ to be
+    the $\le$-smallest $f\in D$ such that there is some $e \in A$ with $e \ltSess f$.
+  \end{itemize}
+  We then show some lemmas: 
+  \begin{enumerate}
+  \item $H$ traverses by $+(\delta+1)$ to $H'$ if and only if
+    $H$ traverses to $f$, then traverses by $+\delta$ to $H'$.
+  \item $H$ traverses by $-(\delta+1)$ to $H'$ if and only if
+    $H$ traverses from $b$, then traverses by $-\delta$ to $H'$.
+  \item If $H$ is well-formed and $H$ traverses to $f$ with result $H'$,
+    then $f$ is the back target of $H'$, and $H'$ traverses from $f$ with result $H$.
+  \item If $H$ is well-formed and $H$ traverses from $b$ with result $H'$,
+    then $b$ is the forward target of $H'$, and $H'$ traverses to $b$ with result $H$.
+  \item If $H$ is well-formed and $H$ traverses to $f$ to $H'$, then $H'$ is well-formed.
+  \item If $H$ is well-formed and $H$ traverses from $b$ to $H'$, then $H'$ is well-formed.
+  \end{enumerate}
+  The result is then an induction on $\delta$.
   \QED
 \end{proof}
 
