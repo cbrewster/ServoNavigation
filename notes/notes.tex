@@ -1027,11 +1027,86 @@ changes, and to each other. The full details are in Appendix~\ref{app:experiment
 
 \section{Specification}
 
-[Suggested edits to the spec:
-  1. traverse to each document, not just the selected one,
-  2. keep all documents in the seession history, not just the fully active ones,
-  3. change the session history order, and
-  4. navigation deletes the joint session future.]
+[TODO: wordsmith the first patch.]
+
+In \S7.7.2, remove the definition of ``joint session history''
+and ``current entry of the joint session history'', and add the following:
+\begin{quote}
+  The \textbf{session past} of a browsing context is the entries
+  of the session history added before the current entry
+  (and does not include the current entry).
+
+  The \textbf{session future} of a browsing context is the entries
+  of the session history added after the current entry
+  (and does not include the current entry).
+
+  If an entry has a next entry in the chronologically ordered session
+  history, it is its \textbf{successor}.
+
+  \textbf{Note:} every entry in the session past has a successor.
+
+  If an entry has a previous entry in the chronologically ordered session
+  history, it is its \textbf{predecessor}.
+
+  \textbf{Note:} every entry in the session future has a predecessor.
+
+  The \textbf{joint session past} of a top-level browsing context is the
+  union of all the session pasts of all browsing contexts
+  that share that top-level browsing context.
+
+  Entries in the joint session past are in decreasing chronological order of
+  the time they were added to their respective session histories. Each
+  entry has an index; the latest entry has index $-1$, and the
+  subsequent entries are numbered with consecutively decreasing
+  integers ($-2$, $-3$, $-4$, etc).
+
+  The \textbf{joint session future} of a top-level browsing context is the
+  union of all the session futures of all browsing contexts
+  that share that top-level browsing context.
+
+  Entries in the joint session future are in increasing chronological order of
+  the time their predecessor were added to their respective session
+  histories. Each entry has an index; the earliest entry has index 1,
+  and the subsequent entries are numbered with consecutively
+  increasing integers (2, 3, 4, etc).
+\end{quote}
+The definition of ``traverse the history by a delta'' begins:
+\begin{quote}
+  To \textbf{traverse the history by a delta} \emph{delta}, the user
+  agent must append a task to this top-level browsing context's session
+  history traversal queue, the task consisting of running the following
+  steps:
+  \begin{enumerate}
+  \item If the index of the current entry of the joint session history
+    plus \emph{delta} is less than zero or greater than or equal to the
+    number of items in the joint session history, then abort these
+    steps.
+
+  \item Let \emph{specified entry} be the entry in the joint session history
+    whose index is the sum of \emph{delta} and the index of the
+    current entry of the joint session history.
+  \end{enumerate}
+\end{quote}
+We propose replacing this text with the following:
+\begin{quote}
+  To \textbf{traverse the history by a delta} \emph{delta}, the user
+  agent must append a task to this top-level browsing context's session
+  history traversal queue, the task consisting of running the following
+  steps:
+  \begin{enumerate}
+  \item If \emph{delta} is zero, then abort these steps.
+
+  \item If \emph{delta} is positive, let \emph{specified entry} be
+    the entry in the joint session future
+    whose index is \emph{delta}. If there is no such entry, then
+    abort these steps.
+
+  \item If \emph{delta} is negative, let \emph{specified entry} be
+    the entry in the joint session past
+    whose index is \emph{delta}. If there is no such entry, then
+    abort these steps.
+  \end{enumerate}
+\end{quote}
 
 \section{Conclusion}
 
