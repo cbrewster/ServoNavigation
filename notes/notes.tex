@@ -1027,8 +1027,6 @@ changes, and to each other. The full details are in Appendix~\ref{app:experiment
 
 \section{Specification}
 
-[TODO: wordsmith the first patch.]
-
 In \S7.7.2, remove the definition of ``joint session history''
 and ``current entry of the joint session history'', and add the following:
 \begin{quote}
@@ -1055,10 +1053,7 @@ and ``current entry of the joint session history'', and add the following:
   that share that top-level browsing context.
 
   Entries in the joint session past are in decreasing chronological order of
-  the time they were added to their respective session histories. Each
-  entry has an index; the latest entry has index $-1$, and the
-  subsequent entries are numbered with consecutively decreasing
-  integers ($-2$, $-3$, $-4$, etc).
+  the time they were added to their respective session histories.
 
   The \textbf{joint session future} of a top-level browsing context is the
   union of all the session futures of all browsing contexts
@@ -1066,45 +1061,93 @@ and ``current entry of the joint session history'', and add the following:
 
   Entries in the joint session future are in increasing chronological order of
   the time their predecessor were added to their respective session
-  histories. Each entry has an index; the earliest entry has index 1,
-  and the subsequent entries are numbered with consecutively
-  increasing integers (2, 3, 4, etc).
+  histories.
 \end{quote}
-The definition of ``traverse the history by a delta'' begins:
+Replace the definition of ``traverse the history by a delta'' by:
 \begin{quote}
   To \textbf{traverse the history by a delta} \emph{delta}, the user
   agent must append a task to this top-level browsing context's session
   history traversal queue, the task consisting of running the following
   steps:
   \begin{enumerate}
-  \item If the index of the current entry of the joint session history
-    plus \emph{delta} is less than zero or greater than or equal to the
-    number of items in the joint session history, then abort these
-    steps.
+  \item Define the \emph{entry sequence}
+    as follows:
+    \begin{enumerate}
 
-  \item Let \emph{specified entry} be the entry in the joint session history
-    whose index is the sum of \emph{delta} and the index of the
-    current entry of the joint session history.
-  \end{enumerate}
-\end{quote}
-We propose replacing this text with the following:
-\begin{quote}
-  To \textbf{traverse the history by a delta} \emph{delta}, the user
-  agent must append a task to this top-level browsing context's session
-  history traversal queue, the task consisting of running the following
-  steps:
-  \begin{enumerate}
-  \item If \emph{delta} is zero, then abort these steps.
+    \item If \emph{delta} is a positive integer $+n$, and if the length of the
+      joint session future is less than or equal to $n$ then let the \emph{entry sequence}
+      be the first $n$ entries of the joint session future.
 
-  \item If \emph{delta} is positive, let \emph{specified entry} be
-    the entry in the joint session future
-    whose index is \emph{delta}. If there is no such entry, then
-    abort these steps.
+    \item If \emph{delta} is a negative integer $-n$, and if the length of the
+      joint session past is less than or equal to $n$ then let the \emph{entry sequence}
+      be the first $n$ entries of the joint session past.
 
-  \item If \emph{delta} is negative, let \emph{specified entry} be
-    the entry in the joint session past
-    whose index is \emph{delta}. If there is no such entry, then
-    abort these steps.
+    \item Otherwise, abort traversing the history by a delta.
+
+    \end{enumerate}
+
+  \item A session entry is said to \textbf{become active} when
+    it is a member of the \emph{entry sequence}, and no
+    session entry after it in the \emph{entry sequence} has the same
+    browsing context.
+
+  \item A session entry is said to \textbf{stay active} when it it the
+    current entry of its browsing context, and there are no members of
+    the \emph{entry sequence} with the same browsing context.
+
+  \item A session entry is said to be \textbf{activating} when either
+    it will become active or stay active.
+    
+  \item A session entry is said to be \textbf{fully activating} it
+    is activating, and either its browsing context is a top-level
+    browsing context, or it has a parent browsing context
+    and the session entry through which it is nested is itself fully activating.
+    
+  \item Queue a task that consists of running the following
+    substeps. The relevant event loop is that of the specified
+    browsing context's active document. The task source for the queued
+    task is the history traversal task source.
+
+    \begin{enumerate}
+
+    \item For each \emph{specified entry} in the \emph{entry sequence},
+      run the following substeps.
+      \begin{enumerate}
+
+      \item Let \emph{specified browsing context} be the browsing context of the \emph{specified entry}.
+
+      \item If there is an ongoing attempt to navigate \emph{specified
+        browsing context} that has not yet matured (i.e. it has not
+        passed the point of making its \texttt{Document} the active
+        document), then cancel that attempt to navigate the browsing
+        context.
+
+      \item If the \emph{specified browsing context}'s active document
+        is not the same \texttt{Document} as the \texttt{Document} of
+        the specified entry, then run these substeps:
+        \begin{enumerate}
+          
+        \item Prompt to unload the active document of the
+          \emph{specified browsing context}. If the user refused to
+          allow the document to be unloaded, then abort these steps.
+
+        \item Unload the active document of the \emph{specified
+          browsing context} with the recycle parameter set to false.
+
+        \end{enumerate}
+
+      \item If the \emph{specified entry} is activating but not fully activating,
+        then set the current entry of the \emph{specified browsing context}
+        to be the \emph{specified entry}.
+        
+      \item If the \emph{specified entry} is fully activating, then
+        traverse the history of the \emph{specified browsing context}
+        to the \emph{specified entry}.
+        
+      \end{enumerate}
+      
+    \end{enumerate}
+
   \end{enumerate}
 \end{quote}
 
