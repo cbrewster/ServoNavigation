@@ -2,7 +2,7 @@
 
 \title{A model of navigation history}
 \author{Connor G. Brewster \and Alan Jeffrey}
-\date{DRAFT of 2016-08-11}
+\date{DRAFT of 2016-08-15}
 \indicia{
   \includegraphics[height=4.5ex]{images/by}
   \begin{tabular}[b]{@{}l}%
@@ -991,13 +991,12 @@ With these patches, we can prove the fundamental property of traversal.
   then $H$ traverses the history by $\delta+\delta'$ to $H''$.
 \end{theorem}
 \begin{proof}
-  In this paper, we give a proof sketch. The full details have been Mechanically verified in Agda~\cite{AgdaProofs}.
+  In this paper, we give a proof sketch. The full details have been mechanically verified in Agda~\cite{AgdaProofs}.
   Define:
   \begin{itemize}
-  \item the \emph{back target} of a navigation history $H$ to be the $\le$-largest $b\in A$ such that
-    there is some $a\in D$ with $a \ltSess b$,
-  \item the \emph{forward target} of $H$ to be
-    the $\le$-smallest $f\in D$ such that there is some $e \in A$ with $e \ltSess f$.
+  \item a document $d$ \emph{can go back} there is some $c \ltSess d$,
+  \item the \emph{back target} $b$ is the $\le$-largest active document which can go back, and
+  \item the \emph{forward target} $f$ is the $\le$-smallest document in the joint session future.
   \end{itemize}
   We then show some lemmas: 
   \begin{enumerate}
