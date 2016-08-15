@@ -596,58 +596,58 @@ In this section, we give a series of counterexamples, and propose patches to
 the model to address each counterexample.
 
 \begin{counterexample}
-  \label{counterexample:homomorphism1}
+  \label{counterexample:intermediaries}
   Let $H$ be:
   \[\begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
-    \node[doc,jshactive,fully](1) at (1,-1){1};
-    \node[doc](2) at (2,-1){2};
-    \node[doc,active,fully](3) at (3,-1){3};
-    \node[doc](4) at (4,-1){4};
-    \node[draw,dotted,fit=(0)] {};
-    \node[draw,dotted,fit=(1)(2)] {};
-    \node[draw,dotted,fit=(3)(4)] {};
-    \draw[->](0)--(1);
-    \draw[->](0)to[out=0,in=150](3);
-  \end{tikzpicture}\]
-  which traverses the history by $1$ to:
-  \[\begin{tikzpicture}
-    \node[doc,active,fully](0) at (0,0){0};
-    \node[doc](1) at (1,-1){1};
-    \node[doc,jshactive,fully](2) at (2,-1){2};
-    \node[doc,active,fully](3) at (3,-1){3};
-    \node[doc](4) at (4,-1){4};
-    \node[draw,dotted,fit=(0)] {};
-    \node[draw,dotted,fit=(1)(2)] {};
-    \node[draw,dotted,fit=(3)(4)] {};
-    \draw[->](0)--(2);
-    \draw[->](0)to[out=0,in=150](3);
-  \end{tikzpicture}\]
-  which traverses the history by $1$ to:
-  \[\begin{tikzpicture}
-    \node[doc,active,fully](0) at (0,0){0};
-    \node[doc](1) at (1,-1){1};
+    \node[doc,jshactive,fully](1) at (1,-2){1};
+    \node[doc](3) at (3,-2){3};
     \node[doc,active,fully](2) at (2,-1){2};
-    \node[doc](3) at (3,-1){3};
+    \node[doc](4) at (4,-1){4};
+    \node[draw,dotted,fit=(0)] {};
+    \node[draw,dotted,fit=(1)(3)] {};
+    \node[draw,dotted,fit=(2)(4)] {};
+    \draw[->](0)--(1);
+    \draw[->](0)--(2);
+  \end{tikzpicture}\]
+  which traverses the history by $1$ to:
+  \[\begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc](1) at (1,-2){1};
+    \node[doc,jshactive,fully](3) at (3,-2){3};
+    \node[doc,active,fully](2) at (2,-1){2};
+    \node[doc](4) at (4,-1){4};
+    \node[draw,dotted,fit=(0)] {};
+    \node[draw,dotted,fit=(1)(3)] {};
+    \node[draw,dotted,fit=(2)(4)] {};
+    \draw[->](0)to[out=300,in=180](3);
+    \draw[->](0)--(2);
+  \end{tikzpicture}\]
+  which traverses the history by $1$ to:
+  \[\begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc](1) at (1,-2){1};
+    \node[doc,active,fully](3) at (3,-2){3};
+    \node[doc](2) at (2,-1){2};
     \node[doc,jshactive,fully](4) at (4,-1){4};
     \node[draw,dotted,fit=(0)] {};
-    \node[draw,dotted,fit=(1)(2)] {};
-    \node[draw,dotted,fit=(3)(4)] {};
-    \draw[->](0)--(2);
-    \draw[->](0)to[out=0,in=150](4);
+    \node[draw,dotted,fit=(1)(3)] {};
+    \node[draw,dotted,fit=(2)(4)] {};
+    \draw[->](0)to[out=300,in=180](3);
+    \draw[->](0)--(4);
   \end{tikzpicture}\]
   but $H$ traverses the history by $2$ to:
   \[\begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
-    \node[doc,active,fully](1) at (1,-1){1};
+    \node[doc,active,fully](1) at (1,-2){1};
+    \node[doc](3) at (3,-2){3};
     \node[doc](2) at (2,-1){2};
-    \node[doc](3) at (3,-1){3};
     \node[doc,jshactive,fully](4) at (4,-1){4};
     \node[draw,dotted,fit=(0)] {};
-    \node[draw,dotted,fit=(1)(2)] {};
-    \node[draw,dotted,fit=(3)(4)] {};
+    \node[draw,dotted,fit=(1)(3)] {};
+    \node[draw,dotted,fit=(2)(4)] {};
     \draw[->](0)--(1);
-    \draw[->](0)to[out=0,in=150](4);
+    \draw[->](0)--(4);
   \end{tikzpicture}\]
   \QED
 \end{counterexample}
@@ -1022,7 +1022,196 @@ In this section, we summarize our experiments to validate the conformance of bro
 implementations with respect to the \textsc{whatwg} specification, to our proposed
 changes, and to each other. The full details are in Appendix~\ref{app:experiments}.
 
-[Present one experiment in detail.]
+We give details of how to recreate Counterexample~\label{counterexample:intermediaries}
+in detail, the other counterexamples are similar. We create an html page for the parent,
+containing two iframes, both of which start at \verb|page1.html|, with a hyperlink
+to \verb|page2.html|:
+\begin{quote}
+\raisebox{-.5\height}{
+   \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/1.png}%
+}~\raisebox{-.5\height}{
+  \begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc,jshactive,fully](1) at (1,-2){1};
+    \node[doc,active,fully](2) at (2,-1){2};
+    \node[draw,dotted,fit=(0)] {};
+    \node[draw,dotted,fit=(1)] {};
+    \node[draw,dotted,fit=(2)] {};
+    \draw[->](0)--(1);
+    \draw[->](0)--(2);
+  \end{tikzpicture}
+}
+\end{quote}
+Clicking on both hyperlinks loads both copies of \verb|page2.html|:
+[TODO: Fix screenshot!]
+\begin{quote}
+\raisebox{-.5\height}{
+   \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/1.png}%
+}~\raisebox{-.5\height}{
+  \begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc](1) at (1,-2){1};
+    \node[doc,active,fully](3) at (3,-2){3};
+    \node[doc](2) at (2,-1){2};
+    \node[doc,jshactive,fully](4) at (4,-1){4};
+    \node[draw,dotted,fit=(0)] {};
+    \node[draw,dotted,fit=(1)(3)] {};
+    \node[draw,dotted,fit=(2)(4)] {};
+    \draw[->](0)to[out=300,in=180](3);
+    \draw[->](0)--(4);
+  \end{tikzpicture}
+}
+\end{quote}
+Pressing the ``back'' button twice takes us to the initial state of Counterexample~\ref{counterexample:intermediaries}:
+\begin{quote}
+\raisebox{-.5\height}{
+   \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/1.png}%
+}~\raisebox{-.5\height}{
+  \begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc,jshactive,fully](1) at (1,-2){1};
+    \node[doc](3) at (3,-2){3};
+    \node[doc,active,fully](2) at (2,-1){2};
+    \node[doc](4) at (4,-1){4};
+    \node[draw,dotted,fit=(0)] {};
+    \node[draw,dotted,fit=(1)(3)] {};
+    \node[draw,dotted,fit=(2)(4)] {};
+    \draw[->](0)--(1);
+    \draw[->](0)--(2);
+  \end{tikzpicture}
+}
+\end{quote}
+Now, the user can traverse the history by $+2$ (by holding down the ``forward'' button)
+which results in state:
+[TODO: Fix screenshot!]
+\begin{quote}
+\raisebox{-.5\height}{
+   \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/1.png}%
+}~\raisebox{-.5\height}{
+  \begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc](1) at (1,-2){1};
+    \node[doc,active,fully](3) at (3,-2){3};
+    \node[doc](2) at (2,-1){2};
+    \node[doc,jshactive,fully](4) at (4,-1){4};
+    \node[draw,dotted,fit=(0)] {};
+    \node[draw,dotted,fit=(1)(3)] {};
+    \node[draw,dotted,fit=(2)(4)] {};
+    \draw[->](0)to[out=300,in=180](3);
+    \draw[->](0)--(4);
+  \end{tikzpicture}
+}
+\end{quote}
+Experimentally, this shows that Firefox is aligned with our patched model, rather than
+with the unpatched model. We can set up similar experiments for the other counterexamples,
+and execute them in other browsers, which gives results\footnote{%
+  Recall that Counterexample~4 depends on a non-well-formed navigation history,
+  and that the patch for it is to make such states unreachable, and so
+  experimentally unverifiable.
+}:
+[TODO: Complete this table!]
+\begin{quote}
+  \begin{tabular}{rllll}
+            & C1 & C2 & C3 & C5 \\
+    Firefox & P  & P  & P  & P \\
+    Chrome  & ?  & ?  & ?  & ? \\
+    Safari  & ?  & ?  & ?  & ? \\
+    Edge    & ?  & ?  & ?  & ?
+  \end{tabular}
+\end{quote}
+Moreover, performing these experiments shows some unexpected behaviours
+in browser implementations. For example in Firefox, starting in state:
+\begin{quote}
+    \raisebox{-.5\height}{
+      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/5.png}
+    }~\raisebox{-.5\height}{
+      \begin{tikzpicture}
+        \node[doc,active,fully](0) at (0,0){0};
+        \node[doc](1) at (1,-1){1};
+        \node[doc](2) at (2,-2){2};
+        \node[doc](3) at (3,-1){3};
+        \node[doc,active,fully](4) at (4,-1){4};
+        \node[doc](5) at (5,-2){5};
+        \node[doc,jshactive,fully](6) at (6,-2){6};
+        \node[draw,dotted,fit=(0)]{};
+        \node[draw,dotted,fit=(1)(4)]{};
+        \node[draw,dotted,fit=(2)(6)]{};
+        \draw[->](0)to[out=0,in=140](4);
+        \draw[->](0)to[out=0,in=120](6);
+      \end{tikzpicture}
+    }
+\end{quote}
+and traversing by $-4$ results in state:
+\begin{quote}
+    \raisebox{-.5\height}{
+      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/6.png}
+    }~\raisebox{-.5\height}{
+      \begin{tikzpicture}
+        \node[doc,active,fully](0) at (0,0){0};
+        \node[doc](1) at (1,-1){1};
+        \node[doc,jshactive,fully](2) at (2,-2){2};
+        \node[doc](3) at (3,-1){3};
+        \node[doc,active,fully](4) at (4,-1){4};
+        \node[doc](5) at (5,-2){5};
+        \node[doc](6) at (6,-2){6};
+        \node[draw,dotted,fit=(0)]{};
+        \node[draw,dotted,fit=(1)(4)]{};
+        \node[draw,dotted,fit=(2)(6)]{};
+        \draw[->](0)to[out=0,in=140](4);
+        \draw[->](0)to[out=-20,in=90](2);
+      \end{tikzpicture}
+    }
+\end{quote}
+This state is unexpected, as document $4$ should have traversed to document $1$, and any state
+showing \verb|page3.html| should be capable of going back.
+
+In Safari, starting from state:
+[TODO: update screenshots]
+\begin{quote}
+    \raisebox{-.5\height}{
+      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/safari/6.png}%
+    }~\raisebox{-.5\height}{
+      \begin{tikzpicture}
+        \node[doc,active,fully](0) at (0,0){0};
+        \node[doc,active,fully](1) at (1,-1){1};
+        \node[doc,jshactive,fully](2) at (2,-2){2};
+        \node[doc](3) at (3,-1){3};
+        \node[doc](4) at (4,-1){4};
+        \node[doc](5) at (5,-2){5};
+        \node[doc](6) at (6,-2){6};
+        \node[draw,dotted,fit=(0)]{};
+        \node[draw,dotted,fit=(1)(4)]{};
+        \node[draw,dotted,fit=(2)(6)]{};
+        \draw[->](0)--(1);
+        \draw[->](0)to[out=-20,in=90](2);
+      \end{tikzpicture}
+    }
+\end{quote}
+and traversing by $+4$ results in:
+\begin{quote}
+    \raisebox{-.5\height}{
+      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/safari/7.png}%
+    }~\raisebox{-.5\height}{
+      \begin{tikzpicture}
+        \node[doc,active,fully](0) at (0,0){0};
+        \node[doc](1) at (1,-1){1};
+        \node[doc](2) at (2,-2){2};
+        \node[doc](3) at (3,-1){3};
+        \node[doc,jshactive,fully](4) at (4,-1){4};
+        \node[doc](5) at (5,-2){5};
+        \node[doc](6) at (6,-2){6};
+        \node[draw,dotted,fit=(0)]{};
+        \node[draw,dotted,fit=(1)(4)]{};
+        \node[draw,dotted,fit=(2)(6)]{};
+        \draw[->](0)to[out=0,in=140](4);
+      \end{tikzpicture}
+    }
+\end{quote}
+In this traversal, we are unable to determine the active entry for first entry as the state is \verb|null|.
+
+As these examples show, navigation history is difficult to implement: even major
+browser implementations give unexpected behaviours when combining separate
+\verb|iframe| session histories.
 
 \section{Specification}
 
@@ -1186,8 +1375,5 @@ the behaviour of existing browser implementations.
 
 \bibliographystyle{plain}
 \bibliography{notes}
-
-\appendix
-\include{appendix}
 
 \end{document}
