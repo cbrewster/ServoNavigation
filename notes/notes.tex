@@ -2,7 +2,7 @@
 
 \title{A model of navigation history}
 \author{Connor G. Brewster \and Alan Jeffrey}
-\date{DRAFT of 2016-08-11}
+\date{DRAFT of 2016-08-15}
 \indicia{
   \includegraphics[height=4.5ex]{images/by}
   \begin{tabular}[b]{@{}l}%
@@ -596,58 +596,58 @@ In this section, we give a series of counterexamples, and propose patches to
 the model to address each counterexample.
 
 \begin{counterexample}
-  \label{counterexample:homomorphism1}
+  \label{counterexample:intermediaries}
   Let $H$ be:
   \[\begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
-    \node[doc,jshactive,fully](1) at (1,-1){1};
-    \node[doc](2) at (2,-1){2};
-    \node[doc,active,fully](3) at (3,-1){3};
-    \node[doc](4) at (4,-1){4};
-    \node[draw,dotted,fit=(0)] {};
-    \node[draw,dotted,fit=(1)(2)] {};
-    \node[draw,dotted,fit=(3)(4)] {};
-    \draw[->](0)--(1);
-    \draw[->](0)to[out=0,in=150](3);
-  \end{tikzpicture}\]
-  which traverses the history by $1$ to:
-  \[\begin{tikzpicture}
-    \node[doc,active,fully](0) at (0,0){0};
-    \node[doc](1) at (1,-1){1};
-    \node[doc,jshactive,fully](2) at (2,-1){2};
-    \node[doc,active,fully](3) at (3,-1){3};
-    \node[doc](4) at (4,-1){4};
-    \node[draw,dotted,fit=(0)] {};
-    \node[draw,dotted,fit=(1)(2)] {};
-    \node[draw,dotted,fit=(3)(4)] {};
-    \draw[->](0)--(2);
-    \draw[->](0)to[out=0,in=150](3);
-  \end{tikzpicture}\]
-  which traverses the history by $1$ to:
-  \[\begin{tikzpicture}
-    \node[doc,active,fully](0) at (0,0){0};
-    \node[doc](1) at (1,-1){1};
+    \node[doc,jshactive,fully](1) at (1,-2){1};
+    \node[doc](3) at (3,-2){3};
     \node[doc,active,fully](2) at (2,-1){2};
-    \node[doc](3) at (3,-1){3};
+    \node[doc](4) at (4,-1){4};
+    \node[draw,dotted,fit=(0)] {};
+    \node[draw,dotted,fit=(1)(3)] {};
+    \node[draw,dotted,fit=(2)(4)] {};
+    \draw[->](0)--(1);
+    \draw[->](0)--(2);
+  \end{tikzpicture}\]
+  which traverses the history by $1$ to:
+  \[\begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc](1) at (1,-2){1};
+    \node[doc,jshactive,fully](3) at (3,-2){3};
+    \node[doc,active,fully](2) at (2,-1){2};
+    \node[doc](4) at (4,-1){4};
+    \node[draw,dotted,fit=(0)] {};
+    \node[draw,dotted,fit=(1)(3)] {};
+    \node[draw,dotted,fit=(2)(4)] {};
+    \draw[->](0)to[out=300,in=180](3);
+    \draw[->](0)--(2);
+  \end{tikzpicture}\]
+  which traverses the history by $1$ to:
+  \[\begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc](1) at (1,-2){1};
+    \node[doc,active,fully](3) at (3,-2){3};
+    \node[doc](2) at (2,-1){2};
     \node[doc,jshactive,fully](4) at (4,-1){4};
     \node[draw,dotted,fit=(0)] {};
-    \node[draw,dotted,fit=(1)(2)] {};
-    \node[draw,dotted,fit=(3)(4)] {};
-    \draw[->](0)--(2);
-    \draw[->](0)to[out=0,in=150](4);
+    \node[draw,dotted,fit=(1)(3)] {};
+    \node[draw,dotted,fit=(2)(4)] {};
+    \draw[->](0)to[out=300,in=180](3);
+    \draw[->](0)--(4);
   \end{tikzpicture}\]
   but $H$ traverses the history by $2$ to:
   \[\begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
-    \node[doc,active,fully](1) at (1,-1){1};
+    \node[doc,active,fully](1) at (1,-2){1};
+    \node[doc](3) at (3,-2){3};
     \node[doc](2) at (2,-1){2};
-    \node[doc](3) at (3,-1){3};
     \node[doc,jshactive,fully](4) at (4,-1){4};
     \node[draw,dotted,fit=(0)] {};
-    \node[draw,dotted,fit=(1)(2)] {};
-    \node[draw,dotted,fit=(3)(4)] {};
+    \node[draw,dotted,fit=(1)(3)] {};
+    \node[draw,dotted,fit=(2)(4)] {};
     \draw[->](0)--(1);
-    \draw[->](0)to[out=0,in=150](4);
+    \draw[->](0)--(4);
   \end{tikzpicture}\]
   \QED
 \end{counterexample}
@@ -991,13 +991,12 @@ With these patches, we can prove the fundamental property of traversal.
   then $H$ traverses the history by $\delta+\delta'$ to $H''$.
 \end{theorem}
 \begin{proof}
-  In this paper, we give a proof sketch. The full details have been Mechanically verified in Agda~\cite{AgdaProofs}.
+  In this paper, we give a proof sketch. The full details have been mechanically verified in Agda~\cite{AgdaProofs}.
   Define:
   \begin{itemize}
-  \item the \emph{back target} of a navigation history $H$ to be the $\le$-largest $b\in A$ such that
-    there is some $a\in D$ with $a \ltSess b$,
-  \item the \emph{forward target} of $H$ to be
-    the $\le$-smallest $f\in D$ such that there is some $e \in A$ with $e \ltSess f$.
+  \item a document $d$ \emph{can go back} there is some $c \ltSess d$,
+  \item the \emph{back target} $b$ is the $\le$-largest active document which can go back, and
+  \item the \emph{forward target} $f$ is the $\le$-smallest document in the joint session future.
   \end{itemize}
   We then show some lemmas: 
   \begin{enumerate}
@@ -1023,11 +1022,214 @@ In this section, we summarize our experiments to validate the conformance of bro
 implementations with respect to the \textsc{whatwg} specification, to our proposed
 changes, and to each other. The full details are in Appendix~\ref{app:experiments}.
 
-[Present one experiment in detail.]
+We give details of how to recreate Counterexample~\label{counterexample:intermediaries}
+in detail, the other counterexamples are similar. We create an html page for the parent,
+containing two iframes, both of which start at \verb|page1.html|, with a hyperlink
+to \verb|page2.html|:
+\begin{quote}
+\raisebox{-.5\height}{
+   \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/1.png}%
+}~\raisebox{-.5\height}{
+  \begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc,jshactive,fully](1) at (1,-2){1};
+    \node[doc,active,fully](2) at (2,-1){2};
+    \node[draw,dotted,fit=(0)] {};
+    \node[draw,dotted,fit=(1)] {};
+    \node[draw,dotted,fit=(2)] {};
+    \draw[->](0)--(1);
+    \draw[->](0)--(2);
+  \end{tikzpicture}
+}
+\end{quote}
+Clicking on both hyperlinks loads both copies of \verb|page2.html|:
+[TODO: Fix screenshot!]
+\begin{quote}
+\raisebox{-.5\height}{
+   \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/1.png}%
+}~\raisebox{-.5\height}{
+  \begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc](1) at (1,-2){1};
+    \node[doc,active,fully](3) at (3,-2){3};
+    \node[doc](2) at (2,-1){2};
+    \node[doc,jshactive,fully](4) at (4,-1){4};
+    \node[draw,dotted,fit=(0)] {};
+    \node[draw,dotted,fit=(1)(3)] {};
+    \node[draw,dotted,fit=(2)(4)] {};
+    \draw[->](0)to[out=300,in=180](3);
+    \draw[->](0)--(4);
+  \end{tikzpicture}
+}
+\end{quote}
+Pressing the ``back'' button twice takes us to the initial state of Counterexample~\ref{counterexample:intermediaries}:
+\begin{quote}
+\raisebox{-.5\height}{
+   \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/1.png}%
+}~\raisebox{-.5\height}{
+  \begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc,jshactive,fully](1) at (1,-2){1};
+    \node[doc](3) at (3,-2){3};
+    \node[doc,active,fully](2) at (2,-1){2};
+    \node[doc](4) at (4,-1){4};
+    \node[draw,dotted,fit=(0)] {};
+    \node[draw,dotted,fit=(1)(3)] {};
+    \node[draw,dotted,fit=(2)(4)] {};
+    \draw[->](0)--(1);
+    \draw[->](0)--(2);
+  \end{tikzpicture}
+}
+\end{quote}
+Now, the user can traverse the history by $+2$ (by holding down the ``forward'' button)
+which results in state:
+[TODO: Fix screenshot!]
+\begin{quote}
+\raisebox{-.5\height}{
+   \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/1.png}%
+}~\raisebox{-.5\height}{
+  \begin{tikzpicture}
+    \node[doc,active,fully](0) at (0,0){0};
+    \node[doc](1) at (1,-2){1};
+    \node[doc,active,fully](3) at (3,-2){3};
+    \node[doc](2) at (2,-1){2};
+    \node[doc,jshactive,fully](4) at (4,-1){4};
+    \node[draw,dotted,fit=(0)] {};
+    \node[draw,dotted,fit=(1)(3)] {};
+    \node[draw,dotted,fit=(2)(4)] {};
+    \draw[->](0)to[out=300,in=180](3);
+    \draw[->](0)--(4);
+  \end{tikzpicture}
+}
+\end{quote}
+Experimentally, this shows that Firefox is aligned with our patched model, rather than
+with the unpatched model. We can set up similar experiments for the other counterexamples,
+and execute them in other browsers, which gives results\footnote{%
+  Recall that Counterexample~4 depends on a non-well-formed navigation history,
+  and that the patch for it is to make such states unreachable, and so
+  experimentally unverifiable.
+}:
+[TODO: Complete this table!]
+\begin{quote}
+  \begin{tabular}{rllll}
+            & C1 & C2 & C3 & C5 \\
+    Firefox & P  & P  & P  & P \\
+    Chrome  & ?  & ?  & ?  & ? \\
+    Safari  & ?  & ?  & ?  & ? \\
+    Edge    & ?  & ?  & ?  & ?
+  \end{tabular}
+\end{quote}
+Moreover, performing these experiments shows some unexpected behaviours
+in browser implementations. For example in Firefox, starting in state:
+\begin{quote}
+    \raisebox{-.5\height}{
+      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/5.png}
+    }~\raisebox{-.5\height}{
+      \begin{tikzpicture}
+        \node[doc,active,fully](0) at (0,0){0};
+        \node[doc](1) at (1,-1){1};
+        \node[doc](2) at (2,-2){2};
+        \node[doc](3) at (3,-1){3};
+        \node[doc,active,fully](4) at (4,-1){4};
+        \node[doc](5) at (5,-2){5};
+        \node[doc,jshactive,fully](6) at (6,-2){6};
+        \node[draw,dotted,fit=(0)]{};
+        \node[draw,dotted,fit=(1)(4)]{};
+        \node[draw,dotted,fit=(2)(6)]{};
+        \draw[->](0)to[out=0,in=140](4);
+        \draw[->](0)to[out=0,in=120](6);
+      \end{tikzpicture}
+    }
+\end{quote}
+and traversing by $-4$ results in state:
+\begin{quote}
+    \raisebox{-.5\height}{
+      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/6.png}
+    }~\raisebox{-.5\height}{
+      \begin{tikzpicture}
+        \node[doc,active,fully](0) at (0,0){0};
+        \node[doc](1) at (1,-1){1};
+        \node[doc,jshactive,fully](2) at (2,-2){2};
+        \node[doc](3) at (3,-1){3};
+        \node[doc,active,fully](4) at (4,-1){4};
+        \node[doc](5) at (5,-2){5};
+        \node[doc](6) at (6,-2){6};
+        \node[draw,dotted,fit=(0)]{};
+        \node[draw,dotted,fit=(1)(4)]{};
+        \node[draw,dotted,fit=(2)(6)]{};
+        \draw[->](0)to[out=0,in=140](4);
+        \draw[->](0)to[out=-20,in=90](2);
+      \end{tikzpicture}
+    }
+\end{quote}
+This state is unexpected, as document $4$ should have traversed to document $1$, and any state
+showing \verb|page3.html| should be capable of going back.
+
+In Safari, starting from state:
+[TODO: update screenshots]
+\begin{quote}
+    \raisebox{-.5\height}{
+      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/safari/6.png}%
+    }~\raisebox{-.5\height}{
+      \begin{tikzpicture}
+        \node[doc,active,fully](0) at (0,0){0};
+        \node[doc,active,fully](1) at (1,-1){1};
+        \node[doc,jshactive,fully](2) at (2,-2){2};
+        \node[doc](3) at (3,-1){3};
+        \node[doc](4) at (4,-1){4};
+        \node[doc](5) at (5,-2){5};
+        \node[doc](6) at (6,-2){6};
+        \node[draw,dotted,fit=(0)]{};
+        \node[draw,dotted,fit=(1)(4)]{};
+        \node[draw,dotted,fit=(2)(6)]{};
+        \draw[->](0)--(1);
+        \draw[->](0)to[out=-20,in=90](2);
+      \end{tikzpicture}
+    }
+\end{quote}
+and traversing by $+4$ results in:
+\begin{quote}
+    \raisebox{-.5\height}{
+      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/safari/7.png}%
+    }~\raisebox{-.5\height}{
+      \begin{tikzpicture}
+        \node[doc,active,fully](0) at (0,0){0};
+        \node[doc](1) at (1,-1){1};
+        \node[doc](2) at (2,-2){2};
+        \node[doc](3) at (3,-1){3};
+        \node[doc,jshactive,fully](4) at (4,-1){4};
+        \node[doc](5) at (5,-2){5};
+        \node[doc](6) at (6,-2){6};
+        \node[draw,dotted,fit=(0)]{};
+        \node[draw,dotted,fit=(1)(4)]{};
+        \node[draw,dotted,fit=(2)(6)]{};
+        \draw[->](0)to[out=0,in=140](4);
+      \end{tikzpicture}
+    }
+\end{quote}
+In this traversal, we are unable to determine the active entry for first entry as the state is \verb|null|.
+
+As these examples show, navigation history is difficult to implement: even major
+browser implementations give unexpected behaviours when combining separate
+\verb|iframe| session histories.
 
 \section{Specification}
 
-In \S7.7.2, remove the definition of ``joint session history''
+In this section, we discuss how the \textsc{whatwg}
+specification~\cite[\S7.7.2]{whatwg} can be aligned with the model
+from \S\ref{sec:model}. This is not a direct translation, due to some
+of the features we elided in our model. In particular, we did not
+discuss how documents are \emph{loaded} and \emph{unloaded}, which
+includes downloading and allocating resources such as \textsc{html} or
+\textsc{css}, and activating JavaScript content. Since
+loading-then-unloading a document is wasteful, the specification
+should be written to avoid loading intermediate pages when traversing
+by a delta. This introduces complexity.
+
+Our first proposed change is that the current specification is defined in terms
+of the ``joint session history'' and makes use of the ``current entry
+of the joint session history'', neither of which are used by our model.
+We propose to remove the definition of ``joint session history''
 and ``current entry of the joint session history'', and add the following:
 \begin{quote}
   The \textbf{session past} of a browsing context is the entries
@@ -1041,12 +1243,8 @@ and ``current entry of the joint session history'', and add the following:
   If an entry has a next entry in the chronologically ordered session
   history, it is its \textbf{successor}.
 
-  \textbf{Note:} every entry in the session past has a successor.
-
   If an entry has a previous entry in the chronologically ordered session
   history, it is its \textbf{predecessor}.
-
-  \textbf{Note:} every entry in the session future has a predecessor.
 
   The \textbf{joint session past} of a top-level browsing context is the
   union of all the session pasts of all browsing contexts
@@ -1063,7 +1261,8 @@ and ``current entry of the joint session history'', and add the following:
   the time their predecessor were added to their respective session
   histories.
 \end{quote}
-Replace the definition of ``traverse the history by a delta'' by:
+The second proposed change is to replace the definition of how a user agent
+should``traverse the history by a delta'' by the following:
 \begin{quote}
   To \textbf{traverse the history by a delta} \emph{delta}, the user
   agent must append a task to this top-level browsing context's session
@@ -1097,11 +1296,17 @@ Replace the definition of ``traverse the history by a delta'' by:
 
   \item A session entry is said to be \textbf{activating} when either
     it will become active or stay active.
+
+    \textbf{Note:} the activating documents
+    will be active after traversal has finished.
     
-  \item A session entry is said to be \textbf{fully activating} it
+  \item A session entry is said to be \textbf{fully activating} if
     is activating, and either its browsing context is a top-level
     browsing context, or it has a parent browsing context
     and the session entry through which it is nested is itself fully activating.
+    
+    \textbf{Note:} the fully activating documents
+    will be fully active after traversal has finished.
     
   \item Queue a task that consists of running the following
     substeps. The relevant event loop is that of the specified
@@ -1137,28 +1342,38 @@ Replace the definition of ``traverse the history by a delta'' by:
         \end{enumerate}
 
       \item If the \emph{specified entry} is activating but not fully activating,
-        then set the current entry of the \emph{specified browsing context}
+        then set the current entry of the session history of \emph{specified browsing context}
         to be the \emph{specified entry}.
         
+        \textbf{Note:} in this case, the current entry of the session history should
+        be updated, but the document will not be fully active, so should not be loaded.
+    
       \item If the \emph{specified entry} is fully activating, then
         traverse the history of the \emph{specified browsing context}
         to the \emph{specified entry}.
         
+        \textbf{Note:} in this case, the document will be fully active, so should be loaded.
+    
       \end{enumerate}
       
     \end{enumerate}
 
   \end{enumerate}
 \end{quote}
+We believe that these changes bring the specification in line with our model, and
+so satisfies the fundamental property of navigation.
 
 \section{Conclusion}
 
-[We did stuff.]
+We have proposed a model of web navigation compatible with the
+\textsc{whatwg} specification, and investigated its ``fundamental
+property'': that traversing by $\delta$ then by $\delta'$ is the same
+as traversing by $\delta+\delta'$.  Unfortunately, the specified model
+does not satisfy this property, but we have shown that a patched model
+does. Experimentally, it appears that the patched model is closer to
+the behaviour of existing browser implementations. 
 
 \bibliographystyle{plain}
 \bibliography{notes}
-
-\appendix
-\include{appendix}
 
 \end{document}
