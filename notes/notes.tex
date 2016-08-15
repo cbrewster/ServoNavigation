@@ -1026,7 +1026,21 @@ changes, and to each other. The full details are in Appendix~\ref{app:experiment
 
 \section{Specification}
 
-In \S7.7.2, remove the definition of ``joint session history''
+In this section, we discuss how the \textsc{whatwg}
+specification~\cite[\S7.7.2]{whatwg} can be aligned with the model
+from \S\ref{sec:model}. This is not a direct translation, due to some
+of the features we elided in our model. In particular, we did not
+discuss how documents are \emph{loaded} and \emph{unloaded}, which
+includes downloading and allocating resources such as \textsc{html} or
+\textsc{css}, and activating JavaScript content. Since
+loading-then-unloading a document is wasteful, the specification
+should be written to avoid loading intermediate pages when traversing
+by a delta. This introduces complexity.
+
+Our first proposed change is that the current specification is defined in terms
+of the ``joint session history'' and makes use of the ``current entry
+of the joint session history'', neither of which are used by our model.
+We propose to remove the definition of ``joint session history''
 and ``current entry of the joint session history'', and add the following:
 \begin{quote}
   The \textbf{session past} of a browsing context is the entries
@@ -1040,12 +1054,8 @@ and ``current entry of the joint session history'', and add the following:
   If an entry has a next entry in the chronologically ordered session
   history, it is its \textbf{successor}.
 
-  \textbf{Note:} every entry in the session past has a successor.
-
   If an entry has a previous entry in the chronologically ordered session
   history, it is its \textbf{predecessor}.
-
-  \textbf{Note:} every entry in the session future has a predecessor.
 
   The \textbf{joint session past} of a top-level browsing context is the
   union of all the session pasts of all browsing contexts
@@ -1062,7 +1072,8 @@ and ``current entry of the joint session history'', and add the following:
   the time their predecessor were added to their respective session
   histories.
 \end{quote}
-Replace the definition of ``traverse the history by a delta'' by:
+The second proposed change is to replace the definition of how a user agent
+should``traverse the history by a delta'' by the following:
 \begin{quote}
   To \textbf{traverse the history by a delta} \emph{delta}, the user
   agent must append a task to this top-level browsing context's session
@@ -1096,11 +1107,17 @@ Replace the definition of ``traverse the history by a delta'' by:
 
   \item A session entry is said to be \textbf{activating} when either
     it will become active or stay active.
+
+    \textbf{Note:} the activating documents
+    will be active after traversal has finished.
     
-  \item A session entry is said to be \textbf{fully activating} it
+  \item A session entry is said to be \textbf{fully activating} if
     is activating, and either its browsing context is a top-level
     browsing context, or it has a parent browsing context
     and the session entry through which it is nested is itself fully activating.
+    
+    \textbf{Note:} the fully activating documents
+    will be fully active after traversal has finished.
     
   \item Queue a task that consists of running the following
     substeps. The relevant event loop is that of the specified
@@ -1136,19 +1153,26 @@ Replace the definition of ``traverse the history by a delta'' by:
         \end{enumerate}
 
       \item If the \emph{specified entry} is activating but not fully activating,
-        then set the current entry of the \emph{specified browsing context}
+        then set the current entry of the session history of \emph{specified browsing context}
         to be the \emph{specified entry}.
         
+        \textbf{Note:} in this case, the current entry of the session history should
+        be updated, but the document will not be fully active, so should not be loaded.
+    
       \item If the \emph{specified entry} is fully activating, then
         traverse the history of the \emph{specified browsing context}
         to the \emph{specified entry}.
         
+        \textbf{Note:} in this case, the document will be fully active, so should be loaded.
+    
       \end{enumerate}
       
     \end{enumerate}
 
   \end{enumerate}
 \end{quote}
+We believe that these changes bring the specification in line with our model, and
+so satisfies the fundamental property of navigation.
 
 \section{Conclusion}
 
