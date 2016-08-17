@@ -549,7 +549,7 @@ specification, for example \cite[\S7.7.2]{whatwg} includes:
   history traversal queue, the task consisting of running the
   following steps:
   \begin{enumerate}
-    
+
   \item If the index of the current entry of the joint session history
     plus $\delta$ is less than zero or greater than or equal to the
     number of items in the joint session history, then abort these
@@ -919,10 +919,10 @@ and we will call examples like this not \emph{well-formed}.
   for any $a \ltSess b$ and $c \ltSess d$,
   if $a \in \Active$ and $d \in \Active$ then $d \leChron b$.
 \end{definition}
-% 
+%
 We have that traversal preserves being well-formed: if $H$ is well-formed, and $H$ traverses
 by $\delta$ to $H'$, then $H'$ is well-formed. Unfortunately, this is not true for navigation,
-because of the way it clears the session future. 
+because of the way it clears the session future.
 
 \begin{counterexample}
 \label{cex:wf-nav}
@@ -998,7 +998,7 @@ With these patches, we can prove the fundamental property of traversal.
   \item the \emph{back target} $b$ is the $\le$-largest active document which can go back, and
   \item the \emph{forward target} $f$ is the $\le$-smallest document in the joint session future.
   \end{itemize}
-  We then show some lemmas: 
+  We then show some lemmas:
   \begin{enumerate}
   \item $H$ traverses by $+(\delta+1)$ to $H'$ if and only if
     $H$ traverses to $f$, then traverses by $+\delta$ to $H'$.
@@ -1043,10 +1043,9 @@ to \verb|page2.html|:
 }
 \end{quote}
 Clicking on both hyperlinks loads both copies of \verb|page2.html|:
-[TODO: Fix screenshot!]
 \begin{quote}
 \raisebox{-.5\height}{
-   \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/1.png}%
+   \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/8.png}%
 }~\raisebox{-.5\height}{
   \begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
@@ -1083,10 +1082,9 @@ Pressing the ``back'' button twice takes us to the initial state of Counterexamp
 \end{quote}
 Now, the user can traverse the history by $+2$ (by holding down the ``forward'' button)
 which results in state:
-[TODO: Fix screenshot!]
 \begin{quote}
 \raisebox{-.5\height}{
-   \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/1.png}%
+   \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/8.png}%
 }~\raisebox{-.5\height}{
   \begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
@@ -1109,13 +1107,14 @@ and execute them in other browsers, which gives results\footnote{%
   and that the patch for it is to make such states unreachable, and so
   experimentally unverifiable.
 }:
-[TODO: Complete this table!]
+[TODO: Complete this table for Edge!]
+[TODO: Finish experiments for Edge]
 \begin{quote}
   \begin{tabular}{rllll}
             & C1 & C2 & C3 & C5 \\
     Firefox & P  & P  & P  & P \\
-    Chrome  & ?  & ?  & ?  & ? \\
-    Safari  & ?  & ?  & ?  & ? \\
+    Chrome  & P  & P  & P  & P \\
+    Safari  & P  & P  & P  & P \\
     Edge    & ?  & ?  & ?  & ?
   \end{tabular}
 \end{quote}
@@ -1299,15 +1298,15 @@ should``traverse the history by a delta'' by the following:
 
     \textbf{Note:} the activating documents
     will be active after traversal has finished.
-    
+
   \item A session entry is said to be \textbf{fully activating} if
     is activating, and either its browsing context is a top-level
     browsing context, or it has a parent browsing context
     and the session entry through which it is nested is itself fully activating.
-    
+
     \textbf{Note:} the fully activating documents
     will be fully active after traversal has finished.
-    
+
   \item Queue a task that consists of running the following
     substeps. The relevant event loop is that of the specified
     browsing context's active document. The task source for the queued
@@ -1331,7 +1330,7 @@ should``traverse the history by a delta'' by the following:
         is not the same \texttt{Document} as the \texttt{Document} of
         the specified entry, then run these substeps:
         \begin{enumerate}
-          
+
         \item Prompt to unload the active document of the
           \emph{specified browsing context}. If the user refused to
           allow the document to be unloaded, then abort these steps.
@@ -1344,18 +1343,18 @@ should``traverse the history by a delta'' by the following:
       \item If the \emph{specified entry} is activating but not fully activating,
         then set the current entry of the session history of \emph{specified browsing context}
         to be the \emph{specified entry}.
-        
+
         \textbf{Note:} in this case, the current entry of the session history should
         be updated, but the document will not be fully active, so should not be loaded.
-    
+
       \item If the \emph{specified entry} is fully activating, then
         traverse the history of the \emph{specified browsing context}
         to the \emph{specified entry}.
-        
+
         \textbf{Note:} in this case, the document will be fully active, so should be loaded.
-    
+
       \end{enumerate}
-      
+
     \end{enumerate}
 
   \end{enumerate}
@@ -1371,7 +1370,7 @@ property'': that traversing by $\delta$ then by $\delta'$ is the same
 as traversing by $\delta+\delta'$.  Unfortunately, the specified model
 does not satisfy this property, but we have shown that a patched model
 does. Experimentally, it appears that the patched model is closer to
-the behaviour of existing browser implementations. 
+the behaviour of existing browser implementations.
 
 \bibliographystyle{plain}
 \bibliography{notes}
