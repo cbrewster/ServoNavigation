@@ -2,7 +2,7 @@
 
 \title{A model of navigation history}
 \author{Connor G. Brewster \and Alan Jeffrey}
-\date{DRAFT of 2016-08-15}
+\date{DRAFT of 2016-08-16}
 \indicia{
   \includegraphics[height=4.5ex]{images/by}
   \begin{tabular}[b]{@{}l}%
@@ -12,6 +12,7 @@
 }
 
 \usepackage{amssymb}
+\usepackage{colortbl}
 \usepackage{graphicx}
 \usepackage{float}
 \usepackage{subcaption}
@@ -1020,7 +1021,7 @@ With these patches, we can prove the fundamental property of traversal.
 
 In this section, we summarize our experiments to validate the conformance of browser
 implementations with respect to the \textsc{whatwg} specification, to our proposed
-changes, and to each other. The full details are in Appendix~\ref{app:experiments}.
+changes, and to each other.
 
 We give details of how to recreate Counterexample~\label{counterexample:intermediaries}
 in detail, the other counterexamples are similar. We create an html page for the parent,
@@ -1109,15 +1110,33 @@ and execute them in other browsers, which gives results\footnote{%
 }:
 [TODO: Complete this table for Edge!]
 [TODO: Finish experiments for Edge]
-\begin{quote}
-  \begin{tabular}{rllll}
-            & C1 & C2 & C3 & C5 \\
+\begin{center}
+ {\sffamily
+  \begin{tabular}{ccccc}
+    \rowcolor{black!50!blue}
+    & \multicolumn{4}{c}{\color{white} Counterexample} \\
+    \rowcolor{black!50!blue}
+    & \color{white}1 & \color{white}2 & \color{white}3 & \color{white}5 \\
+    \rowcolor{white!90!blue}
     Firefox & P  & P  & P  & P \\
     Chrome  & P  & P  & P  & P \\
+    \rowcolor{white!90!blue}
     Safari  & P  & P  & P  & P \\
-    Edge    & ?  & ?  & ?  & ?
+    Edge    & ?  & ?  & ?  & ? \\
+    \rowcolor{white!90!blue}
+    Servo   & P  & P  & P  & P \\
   \end{tabular}
-\end{quote}
+ }
+ \quad
+ \begin{tabular}{ll}
+   \textsf{P}:& aligned with patched model \\
+   \textsf{U}:& aligned with unpatched model \\
+ \end{tabular}
+\end{center}
+Most browsers are compatible with the patched model rather than than
+unpatched model, with the exception of Edge (Internet Explorer has similar
+behaviour). Servo was designed from the patched model.
+
 Moreover, performing these experiments shows some unexpected behaviours
 in browser implementations. For example in Firefox, starting in state:
 \begin{quote}
@@ -1164,8 +1183,8 @@ and traversing by $-4$ results in state:
 This state is unexpected, as document $4$ should have traversed to document $1$, and any state
 showing \verb|page3.html| should be capable of going back.
 
-In Safari, starting from state:
-[TODO: update screenshots]
+In Safari, the use of \verb|pushState| and \verb|popState| for navigation has unexpected
+results. We can use \verb|pushState| and \verb|popState| to construct state:
 \begin{quote}
     \raisebox{-.5\height}{
       \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/safari/6.png}%
@@ -1186,7 +1205,7 @@ In Safari, starting from state:
       \end{tikzpicture}
     }
 \end{quote}
-and traversing by $+4$ results in:
+then traversing by $+4$ results in:
 \begin{quote}
     \raisebox{-.5\height}{
       \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/safari/7.png}%
@@ -1206,7 +1225,8 @@ and traversing by $+4$ results in:
       \end{tikzpicture}
     }
 \end{quote}
-In this traversal, we are unable to determine the active entry for first entry as the state is \verb|null|.
+After this traversal, we are unable to determine the active entry for one of the \verb|iframes|
+as its state is \verb|null|.
 
 As these examples show, navigation history is difficult to implement: even major
 browser implementations give unexpected behaviours when combining separate
