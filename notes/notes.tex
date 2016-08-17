@@ -61,7 +61,7 @@
 
 \maketitle
 
-\subparagraph{Abstact:}
+\subparagraph{Abstract:}
 Navigation has been a core component of the web since its inception:
 users and scripts can follow hyperlinks, and can go back or forwards
 through the navigation history. In this paper, we present a formal
@@ -112,7 +112,7 @@ the HTML specification, and investigate its properties. The
 starting point is that there is a total order of
 \emph{documents}\footnote{%
   We are eliding some of the technical details of the specification here,
-  in particular we are conflatating a \emph{browsing context}
+  in particular we are conflating a \emph{browsing context}
   with the document it contains, and we are ignoring issues around
   document loading and unloading, and around the current entry of the joint
   session history.
@@ -158,7 +158,7 @@ that traversing by $\delta$ then by $\delta'$
 is the same as traversing by $\delta+\delta'$.
 
 So far, the model is refreshingly simple, and corresponds well to
-the specification and to browser implmentations. Where the problems
+the specification and to browser implementations. Where the problems
 arise is in the \emph{hierarchical} nature of documents. HTML
 documents can contain \verb|iframe| elements, which
 are independent documents in their own right, often
@@ -327,7 +327,7 @@ A \emph{equivalence} is a preorder $(\Verts,{\sim})$ such that:
 We can now formalize our model of navigation history, together with
 the operations of navigation and traversal. This formalizes the
 navigation history specification~\cite{whatwg}, and has a pleasant
-diagramatic presentation, but as we shall see in
+diagrammatic presentation, but as we shall see in
 \S\ref{sec:properties}, it has unexpected properties.
 
 \begin{definition}[Navigation history]
@@ -348,7 +348,7 @@ such that:
   \QED
 \end{itemize}
 \end{definition}
-We present such navigation histories diagramatically, using
+We present such navigation histories diagrammatically, using
 left-to-right position for chronological order, and grouping documents
 in the same session. Since documents in the same session must have the
 same parent, we only draw the document hierarchy for active children.
@@ -939,7 +939,7 @@ because of the way it clears the session future.
     \draw[->](0)--(1);
     \draw[->](1)--(2);
   \end{tikzpicture}\]
-  which navgates from $2$ to:
+  which navigates from $2$ to:
   \[\begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
     \node[doc,active,fully](1) at (1,-1){1};
@@ -1024,8 +1024,8 @@ implementations with respect to the \textsc{whatwg} specification, to our propos
 changes, and to each other.
 
 We give details of how to recreate Counterexample~\label{counterexample:intermediaries}
-in detail, the other counterexamples are similar. We create an html page for the parent,
-containing two iframes, both of which start at \verb|page1.html|, with a hyperlink
+in detail, the other counterexamples are similar. We create an \textsc{html} page for the parent,
+containing two \verb|iframe|s, both of which start at \verb|page1.html|, with a hyperlink
 to \verb|page2.html|:
 \begin{quote}
 \raisebox{-.5\height}{
@@ -1225,7 +1225,7 @@ then traversing by $+4$ results in:
       \end{tikzpicture}
     }
 \end{quote}
-After this traversal, we are unable to determine the active entry for one of the \verb|iframes|
+After this traversal, we are unable to determine the active entry for one of the \verb|iframe|s
 as its state is \verb|null|.
 
 As these examples show, navigation history is difficult to implement: even major
