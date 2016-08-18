@@ -348,7 +348,7 @@ such that:
   \QED
 \end{itemize}
 \end{definition}
-We present such navigation histories diagrammatically, using
+We present such navigation histories ad diagrams, using
 left-to-right position for chronological order, and grouping documents
 in the same session. Since documents in the same session must have the
 same parent, we only draw the document hierarchy for active children.
@@ -490,7 +490,7 @@ then replace $1$ by $6$:
 We also define \emph{traversing the history}, which changes the active
 documents.
 \begin{definition}[Traversal]
-Define \emph{traversing the history to $\aDoc$ in $\aNH$}
+Define \emph{traversing the history to $\aDoc$ in $\aNH$}, where $\aDoc \in \Docs$,
 to be $\aNH'=(\Docs,\Active',{\leChron},{\parentOf},{\eqSess})$ where:
 \begin{itemize}
 \item $\bDoc\in\Active'$ whenever $\aDoc\not\eqSess\bDoc \in \Active$, or
@@ -1029,7 +1029,7 @@ containing two \verb|iframe|s, both of which start at \verb|page1.html|, with a 
 to \verb|page2.html|:
 \begin{quote}
 \raisebox{-.5\height}{
-   \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/1.png}%
+   \includegraphics[width=.45\linewidth]{images/experiments/forwardback4/firefox/1.png}%
 }~\raisebox{-.5\height}{
   \begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
@@ -1046,7 +1046,7 @@ to \verb|page2.html|:
 Clicking on both hyperlinks loads both copies of \verb|page2.html|:
 \begin{quote}
 \raisebox{-.5\height}{
-   \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/8.png}%
+   \includegraphics[width=.45\linewidth]{images/experiments/forwardback4/firefox/8.png}%
 }~\raisebox{-.5\height}{
   \begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
@@ -1065,7 +1065,7 @@ Clicking on both hyperlinks loads both copies of \verb|page2.html|:
 Pressing the ``back'' button twice takes us to the initial state of Counterexample~\ref{counterexample:intermediaries}:
 \begin{quote}
 \raisebox{-.5\height}{
-   \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/1.png}%
+   \includegraphics[width=.45\linewidth]{images/experiments/forwardback4/firefox/1.png}%
 }~\raisebox{-.5\height}{
   \begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
@@ -1085,7 +1085,7 @@ Now, the user can traverse the history by $+2$ (by holding down the ``forward'' 
 which results in state:
 \begin{quote}
 \raisebox{-.5\height}{
-   \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/8.png}%
+   \includegraphics[width=.45\linewidth]{images/experiments/forwardback4/firefox/8.png}%
 }~\raisebox{-.5\height}{
   \begin{tikzpicture}
     \node[doc,active,fully](0) at (0,0){0};
@@ -1139,8 +1139,8 @@ Moreover, performing these experiments shows some unexpected behaviours
 in browser implementations. For example in Firefox, starting in state:
 \begin{quote}
     \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/5.png}
-    }~\raisebox{-.5\height}{
+      \includegraphics[width=.45\linewidth]{images/experiments/forwardback4/firefox/5.png}
+    }~\raisebox{-.5\height}{\rlap{
       \begin{tikzpicture}
         \node[doc,active,fully](0) at (0,0){0};
         \node[doc](1) at (1,-1){1};
@@ -1155,13 +1155,13 @@ in browser implementations. For example in Firefox, starting in state:
         \draw[->](0)to[out=0,in=140](4);
         \draw[->](0)to[out=0,in=120](6);
       \end{tikzpicture}
-    }
+    }}
 \end{quote}
 and traversing by $-4$ results in state:
 \begin{quote}
     \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4/firefox/6.png}
-    }~\raisebox{-.5\height}{
+      \includegraphics[width=.45\linewidth]{images/experiments/forwardback4/firefox/6.png}
+    }~\raisebox{-.5\height}{\rlap{
       \begin{tikzpicture}
         \node[doc,active,fully](0) at (0,0){0};
         \node[doc](1) at (1,-1){1};
@@ -1176,7 +1176,7 @@ and traversing by $-4$ results in state:
         \draw[->](0)to[out=0,in=140](4);
         \draw[->](0)to[out=-20,in=90](2);
       \end{tikzpicture}
-    }
+    }}
 \end{quote}
 This state is unexpected, as document $4$ should have traversed to document $1$, and any state
 showing \verb|page3.html| should be capable of going back.
@@ -1185,8 +1185,8 @@ In Safari, the use of \verb|pushState| and \verb|popState| for navigation has un
 results. We can use \verb|pushState| and \verb|popState| to construct state:
 \begin{quote}
     \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/safari/6.png}%
-    }~\raisebox{-.5\height}{
+      \includegraphics[width=.45\linewidth]{images/experiments/forwardback4state/safari/6.png}%
+    }~\raisebox{-.5\height}{\rlap{
       \begin{tikzpicture}
         \node[doc,active,fully](0) at (0,0){0};
         \node[doc,active,fully](1) at (1,-1){1};
@@ -1201,13 +1201,13 @@ results. We can use \verb|pushState| and \verb|popState| to construct state:
         \draw[->](0)--(1);
         \draw[->](0)to[out=-20,in=90](2);
       \end{tikzpicture}
-    }
+    }}
 \end{quote}
 then traversing by $+4$ results in:
 \begin{quote}
     \raisebox{-.5\height}{
-      \includegraphics[width=.5\linewidth]{images/experiments/forwardback4state/safari/7.png}%
-    }~\raisebox{-.5\height}{
+      \includegraphics[width=.45\linewidth]{images/experiments/forwardback4state/safari/7.png}%
+    }~\raisebox{-.5\height}{\rlap{
       \begin{tikzpicture}
         \node[doc,active,fully](0) at (0,0){0};
         \node[doc](1) at (1,-1){1};
@@ -1221,7 +1221,7 @@ then traversing by $+4$ results in:
         \node[draw,dotted,fit=(2)(6)]{};
         \draw[->](0)to[out=0,in=140](4);
       \end{tikzpicture}
-    }
+    }}
 \end{quote}
 After this traversal, we are unable to determine the active entry for one of the \verb|iframe|s
 as its state is \verb|null|.
