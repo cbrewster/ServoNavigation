@@ -2,7 +2,7 @@
 
 \title{A model of navigation history}
 \author{Connor G. Brewster \and Alan Jeffrey}
-\date{DRAFT of 2016-08-16}
+\date{DRAFT of 2016-08-18}
 \indicia{
   \includegraphics[height=4.5ex]{images/by}
   \begin{tabular}[b]{@{}l}%
@@ -1108,8 +1108,6 @@ and execute them in other browsers, which gives results\footnote{%
   and that the patch for it is to make such states unreachable, and so
   experimentally unverifiable.
 }:
-[TODO: Complete this table for Edge!]
-[TODO: Finish experiments for Edge]
 \begin{center}
  {\sffamily
   \begin{tabular}{ccccc}
@@ -1118,13 +1116,13 @@ and execute them in other browsers, which gives results\footnote{%
     \rowcolor{black!50!blue}
     & \color{white}1 & \color{white}2 & \color{white}3 & \color{white}5 \\
     \rowcolor{white!90!blue}
-    Firefox & P  & P  & P  & P \\
-    Chrome  & P  & P  & P  & P \\
+    Firefox           & P  & P  & P  & P \\
+    Chrome            & P  & P  & P  & P \\
     \rowcolor{white!90!blue}
-    Safari  & P  & P  & P  & P \\
-    Edge    & ?  & ?  & ?  & ? \\
+    Safari            & P  & P  & P  & P \\
+    Internet Explorer & U  & U  & P  & P \\
     \rowcolor{white!90!blue}
-    Servo   & P  & P  & P  & P \\
+    Servo             & P  & P  & P  & P \\
   \end{tabular}
  }
  \quad
@@ -1134,8 +1132,8 @@ and execute them in other browsers, which gives results\footnote{%
  \end{tabular}
 \end{center}
 Most browsers are compatible with the patched model rather than than
-unpatched model, with the exception of Edge (Internet Explorer has similar
-behaviour). Servo was designed from the patched model.
+unpatched model, with the exception of Internet Explorer, which has mixed behaviour
+(Edge is similar). Servo was designed from the patched model.
 
 Moreover, performing these experiments shows some unexpected behaviours
 in browser implementations. For example in Firefox, starting in state:
